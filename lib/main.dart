@@ -1,31 +1,40 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:provider/provider.dart';
 
 import 'database/app_database.dart';
-import 'pages/home_page.dart';
+import 'pages/surahs_page.dart';
+import 'themes/theme_provider.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await AppDatabase.initialize();
 
-  runApp(const Iqra());
+  runApp(
+    MultiProvider(
+      providers: [
+        ChangeNotifierProvider(create: (context) => ThemeProvider()),
+      ],
+      child: const IqraApp(),
+    ),
+  );
 }
 
-class Iqra extends StatelessWidget {
-  const Iqra({super.key});
+class IqraApp extends StatelessWidget {
+  const IqraApp({super.key});
 
   @override
   Widget build(BuildContext context) {
     return ScreenUtilInit(
       enableScaleText: () => false,
       minTextAdapt: true,
-      designSize: const Size(392.72727272727275, 800.7272727272727),
-      builder: (_, child) {
-        return const MaterialApp(
-          debugShowCheckedModeBanner: false,
-          home: HomePage(),
-        );
-      },
+      splitScreenMode: true,
+      designSize: const Size(392.727, 800.727),
+      builder: (context, child) => MaterialApp(
+        debugShowCheckedModeBanner: false,
+        home: const SurahsPage(),
+        theme: Provider.of<ThemeProvider>(context).themeData,
+      ),
     );
   }
 }

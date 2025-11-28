@@ -39,6 +39,7 @@ dependencies:
   isar: ^3.1.0+1
   isar_flutter_libs: ^3.1.0+1
   path_provider: ^2.1.5
+  provider: ^6.1.5+1
 
 dev_dependencies:
   flutter_test:
@@ -86,9 +87,6 @@ flutter:
       fonts:
         - asset: assets/fonts/arsura.ttf
 
-    - family: "versenumber"
-      fonts:
-        - asset: assets/fonts/versenumbers-Regular.otf
     - family: QCF_BSML 
       fonts:
         - asset: assets/fonts\QCF2BSMLfonts\QCF4_QBSML-Regular.woff

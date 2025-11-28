@@ -13,6 +13,7 @@ class Surah {
 
   @Index(unique: true)
   late int surahIndex;
+
   late int versesCount;
   late int words;
   late int letters;
