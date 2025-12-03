@@ -41,6 +41,10 @@ dependencies:
   path_provider: ^2.1.5
   provider: ^6.1.5+1
 
+  flutter_islamic_icons: ^1.0.2
+  flutter_local_notifications: ^19.5.0
+  permission_handler: ^12.0.1
+
 dev_dependencies:
   flutter_test:
     sdk: flutter
@@ -86,6 +90,10 @@ flutter:
     - family: "arsura"
       fonts:
         - asset: assets/fonts/arsura.ttf
+
+    - family: "SurahName"
+      fonts:
+        - asset: assets/fonts/surah-name-v1.ttf
 
     - family: QCF_BSML 
       fonts:

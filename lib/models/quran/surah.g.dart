@@ -64,6 +64,45 @@ const SurahSchema = CollectionSchema(
   deserializeProp: _surahDeserializeProp,
   idName: r'id',
   indexes: {
+    r'surahName': IndexSchema(
+      id: -1901455052265938044,
+      name: r'surahName',
+      unique: false,
+      replace: false,
+      properties: [
+        IndexPropertySchema(
+          name: r'surahName',
+          type: IndexType.hash,
+          caseSensitive: false,
+        )
+      ],
+    ),
+    r'surahNameTr': IndexSchema(
+      id: 6267411816581025481,
+      name: r'surahNameTr',
+      unique: false,
+      replace: false,
+      properties: [
+        IndexPropertySchema(
+          name: r'surahNameTr',
+          type: IndexType.hash,
+          caseSensitive: false,
+        )
+      ],
+    ),
+    r'surahType': IndexSchema(
+      id: 571434597675178281,
+      name: r'surahType',
+      unique: false,
+      replace: false,
+      properties: [
+        IndexPropertySchema(
+          name: r'surahType',
+          type: IndexType.hash,
+          caseSensitive: false,
+        )
+      ],
+    ),
     r'surahIndex': IndexSchema(
       id: -4295384286817959383,
       name: r'surahIndex',
@@ -72,6 +111,19 @@ const SurahSchema = CollectionSchema(
       properties: [
         IndexPropertySchema(
           name: r'surahIndex',
+          type: IndexType.value,
+          caseSensitive: false,
+        )
+      ],
+    ),
+    r'versesCount': IndexSchema(
+      id: 4484923994961064560,
+      name: r'versesCount',
+      unique: false,
+      replace: false,
+      properties: [
+        IndexPropertySchema(
+          name: r'versesCount',
           type: IndexType.value,
           caseSensitive: false,
         )
@@ -250,6 +302,14 @@ extension SurahQueryWhereSort on QueryBuilder<Surah, Surah, QWhere> {
       );
     });
   }
+
+  QueryBuilder<Surah, Surah, QAfterWhere> anyVersesCount() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addWhereClause(
+        const IndexWhereClause.any(indexName: r'versesCount'),
+      );
+    });
+  }
 }
 
 extension SurahQueryWhere on QueryBuilder<Surah, Surah, QWhereClause> {
@@ -315,6 +375,141 @@ extension SurahQueryWhere on QueryBuilder<Surah, Surah, QWhereClause> {
         upper: upperId,
         includeUpper: includeUpper,
       ));
+    });
+  }
+
+  QueryBuilder<Surah, Surah, QAfterWhereClause> surahNameEqualTo(
+      String surahName) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addWhereClause(IndexWhereClause.equalTo(
+        indexName: r'surahName',
+        value: [surahName],
+      ));
+    });
+  }
+
+  QueryBuilder<Surah, Surah, QAfterWhereClause> surahNameNotEqualTo(
+      String surahName) {
+    return QueryBuilder.apply(this, (query) {
+      if (query.whereSort == Sort.asc) {
+        return query
+            .addWhereClause(IndexWhereClause.between(
+              indexName: r'surahName',
+              lower: [],
+              upper: [surahName],
+              includeUpper: false,
+            ))
+            .addWhereClause(IndexWhereClause.between(
+              indexName: r'surahName',
+              lower: [surahName],
+              includeLower: false,
+              upper: [],
+            ));
+      } else {
+        return query
+            .addWhereClause(IndexWhereClause.between(
+              indexName: r'surahName',
+              lower: [surahName],
+              includeLower: false,
+              upper: [],
+            ))
+            .addWhereClause(IndexWhereClause.between(
+              indexName: r'surahName',
+              lower: [],
+              upper: [surahName],
+              includeUpper: false,
+            ));
+      }
+    });
+  }
+
+  QueryBuilder<Surah, Surah, QAfterWhereClause> surahNameTrEqualTo(
+      String surahNameTr) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addWhereClause(IndexWhereClause.equalTo(
+        indexName: r'surahNameTr',
+        value: [surahNameTr],
+      ));
+    });
+  }
+
+  QueryBuilder<Surah, Surah, QAfterWhereClause> surahNameTrNotEqualTo(
+      String surahNameTr) {
+    return QueryBuilder.apply(this, (query) {
+      if (query.whereSort == Sort.asc) {
+        return query
+            .addWhereClause(IndexWhereClause.between(
+              indexName: r'surahNameTr',
+              lower: [],
+              upper: [surahNameTr],
+              includeUpper: false,
+            ))
+            .addWhereClause(IndexWhereClause.between(
+              indexName: r'surahNameTr',
+              lower: [surahNameTr],
+              includeLower: false,
+              upper: [],
+            ));
+      } else {
+        return query
+            .addWhereClause(IndexWhereClause.between(
+              indexName: r'surahNameTr',
+              lower: [surahNameTr],
+              includeLower: false,
+              upper: [],
+            ))
+            .addWhereClause(IndexWhereClause.between(
+              indexName: r'surahNameTr',
+              lower: [],
+              upper: [surahNameTr],
+              includeUpper: false,
+            ));
+      }
+    });
+  }
+
+  QueryBuilder<Surah, Surah, QAfterWhereClause> surahTypeEqualTo(
+      String surahType) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addWhereClause(IndexWhereClause.equalTo(
+        indexName: r'surahType',
+        value: [surahType],
+      ));
+    });
+  }
+
+  QueryBuilder<Surah, Surah, QAfterWhereClause> surahTypeNotEqualTo(
+      String surahType) {
+    return QueryBuilder.apply(this, (query) {
+      if (query.whereSort == Sort.asc) {
+        return query
+            .addWhereClause(IndexWhereClause.between(
+              indexName: r'surahType',
+              lower: [],
+              upper: [surahType],
+              includeUpper: false,
+            ))
+            .addWhereClause(IndexWhereClause.between(
+              indexName: r'surahType',
+              lower: [surahType],
+              includeLower: false,
+              upper: [],
+            ));
+      } else {
+        return query
+            .addWhereClause(IndexWhereClause.between(
+              indexName: r'surahType',
+              lower: [surahType],
+              includeLower: false,
+              upper: [],
+            ))
+            .addWhereClause(IndexWhereClause.between(
+              indexName: r'surahType',
+              lower: [],
+              upper: [surahType],
+              includeUpper: false,
+            ));
+      }
     });
   }
 
@@ -403,6 +598,96 @@ extension SurahQueryWhere on QueryBuilder<Surah, Surah, QWhereClause> {
         lower: [lowerSurahIndex],
         includeLower: includeLower,
         upper: [upperSurahIndex],
+        includeUpper: includeUpper,
+      ));
+    });
+  }
+
+  QueryBuilder<Surah, Surah, QAfterWhereClause> versesCountEqualTo(
+      int versesCount) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addWhereClause(IndexWhereClause.equalTo(
+        indexName: r'versesCount',
+        value: [versesCount],
+      ));
+    });
+  }
+
+  QueryBuilder<Surah, Surah, QAfterWhereClause> versesCountNotEqualTo(
+      int versesCount) {
+    return QueryBuilder.apply(this, (query) {
+      if (query.whereSort == Sort.asc) {
+        return query
+            .addWhereClause(IndexWhereClause.between(
+              indexName: r'versesCount',
+              lower: [],
+              upper: [versesCount],
+              includeUpper: false,
+            ))
+            .addWhereClause(IndexWhereClause.between(
+              indexName: r'versesCount',
+              lower: [versesCount],
+              includeLower: false,
+              upper: [],
+            ));
+      } else {
+        return query
+            .addWhereClause(IndexWhereClause.between(
+              indexName: r'versesCount',
+              lower: [versesCount],
+              includeLower: false,
+              upper: [],
+            ))
+            .addWhereClause(IndexWhereClause.between(
+              indexName: r'versesCount',
+              lower: [],
+              upper: [versesCount],
+              includeUpper: false,
+            ));
+      }
+    });
+  }
+
+  QueryBuilder<Surah, Surah, QAfterWhereClause> versesCountGreaterThan(
+    int versesCount, {
+    bool include = false,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addWhereClause(IndexWhereClause.between(
+        indexName: r'versesCount',
+        lower: [versesCount],
+        includeLower: include,
+        upper: [],
+      ));
+    });
+  }
+
+  QueryBuilder<Surah, Surah, QAfterWhereClause> versesCountLessThan(
+    int versesCount, {
+    bool include = false,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addWhereClause(IndexWhereClause.between(
+        indexName: r'versesCount',
+        lower: [],
+        upper: [versesCount],
+        includeUpper: include,
+      ));
+    });
+  }
+
+  QueryBuilder<Surah, Surah, QAfterWhereClause> versesCountBetween(
+    int lowerVersesCount,
+    int upperVersesCount, {
+    bool includeLower = true,
+    bool includeUpper = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addWhereClause(IndexWhereClause.between(
+        indexName: r'versesCount',
+        lower: [lowerVersesCount],
+        includeLower: includeLower,
+        upper: [upperVersesCount],
         includeUpper: includeUpper,
       ));
     });

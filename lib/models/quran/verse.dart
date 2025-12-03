@@ -5,6 +5,13 @@ part 'verse.g.dart';
 @collection
 class Verse {
   Id id = Isar.autoIncrement;
+
+  @Index()
+  late int surahNumber;
+  @Index()
+  late int verseNumber;
+
+  @Index(caseSensitive: false)
   late String surahName;
 
   late String qcfData;
@@ -12,9 +19,4 @@ class Verse {
 
   late String verseText;
   late String normalVerse;
-
-  @Index()
-  late int surahNumber;
-  @Index()
-  late int verseNumber;
 }

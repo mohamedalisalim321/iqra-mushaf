@@ -2,34 +2,40 @@ import 'dart:convert';
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
-import 'package:iqra/models/quran/verse_data.dart';
 import 'package:isar/isar.dart';
 
+import '../models/quran/verse_data.dart';
 import 'app_database.dart';
 
 class VerseDataDatabase {
   static Isar get _isar => AppDatabase.db;
 
+  /// Seed database if empty
   static Future<void> seedIfNeeded() async {
-    if (await _isar.verseDatas.count() > 0) return;
+    final count = await _isar.verseDatas.count();
+    if (count > 0) return;
 
     try {
-      final versesData = <VerseData>[];
+      final rawJson =
+          await rootBundle.loadString("assets/data/verses_data.json");
 
-      final raw = await rootBundle.loadString("assets/data/verses_data.json");
-      final parsed = await compute(parseVersesData, raw);
+      // Parse JSON in background isolate
+      final parsedList = await compute(_parseVerseDataJson, rawJson);
 
-      versesData.addAll(parsed);
+      // Batch insert
       await _isar.writeTxn(() async {
-        await _isar.verseDatas.putAll(versesData);
+        await _isar.verseDatas.putAll(parsedList);
       });
 
-      print(await _isar.verseDatas.count());
-    } catch (e) {
-      throw Exception("Error seeding database → $e");
+      debugPrint(
+          "VerseData seeding completed. Total entries: ${await _isar.verseDatas.count()}");
+    } catch (e, st) {
+      debugPrint("Error seeding VerseData: $e\n$st");
+      throw Exception("Error seeding VerseData database: $e");
     }
   }
 
+  /// Get a single word's VerseData by surah, verse, word
   static Future<VerseData?> getVerseData(
       int surahNumber, int verseNumber, int wordNumber) async {
     try {
@@ -41,22 +47,38 @@ class VerseDataDatabase {
           .and()
           .wordNumberEqualTo(wordNumber)
           .findFirst();
-    } catch (e) {
+    } catch (e, st) {
+      debugPrint("Error fetching VerseData: $e\n$st");
       rethrow;
     }
   }
+
+  /// Fetch all words for a given verse
+  static Future<List<VerseData>> getVerseWords(
+      int surahNumber, int verseNumber) async {
+    return await _isar.verseDatas
+        .filter()
+        .surahNumberEqualTo(surahNumber)
+        .and()
+        .verseNumberEqualTo(verseNumber)
+        .sortByWordNumber()
+        .findAll();
+  }
 }
 
-List<VerseData> parseVersesData(String json) {
-  List data = jsonDecode(json);
+/// ===========================================================
+/// JSON parsing in background isolate
+/// ===========================================================
+List<VerseData> _parseVerseDataJson(String jsonStr) {
+  final List<dynamic> data = jsonDecode(jsonStr);
 
   return data.map((v) {
     return VerseData()
-      ..surahNumber = v["surah"]
-      ..verseNumber = v["ayah"]
-      ..wordNumber = v["word"]
-      ..sarf = v["sarf"]
-      ..irab = v["irab"]
-      ..wordMeaning = v["word_meaning"];
+      ..surahNumber = v["surah"] ?? 0
+      ..verseNumber = v["ayah"] ?? 0
+      ..wordNumber = v["word"] ?? 0
+      ..sarf = v["sarf"] ?? ""
+      ..irab = v["irab"] ?? ""
+      ..wordMeaning = v["word_meaning"] ?? "";
   }).toList();
 }

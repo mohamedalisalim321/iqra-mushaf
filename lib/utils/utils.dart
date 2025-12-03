@@ -11,6 +11,17 @@ const Map<String, String> _arabicNumbers = {
   "9": "٩",
 };
 
+extension ArabicNumberExtension on num {
+  String toArabicNumber() {
+    final str = toString();
+
+    return str.split("").map((char) {
+      // Keep non-digit characters (minus sign, decimal point, etc.)
+      return _arabicNumbers[char] ?? char;
+    }).join();
+  }
+}
+
 convertToArabicNumber(int index) {
   final digits = index.toString().split("");
   final arabicNumeric =

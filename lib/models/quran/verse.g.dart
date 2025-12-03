@@ -84,6 +84,19 @@ const VerseSchema = CollectionSchema(
           caseSensitive: false,
         )
       ],
+    ),
+    r'surahName': IndexSchema(
+      id: -1901455052265938044,
+      name: r'surahName',
+      unique: false,
+      replace: false,
+      properties: [
+        IndexPropertySchema(
+          name: r'surahName',
+          type: IndexType.hash,
+          caseSensitive: false,
+        )
+      ],
     )
   },
   links: {},
@@ -446,6 +459,51 @@ extension VerseQueryWhere on QueryBuilder<Verse, Verse, QWhereClause> {
         upper: [upperVerseNumber],
         includeUpper: includeUpper,
       ));
+    });
+  }
+
+  QueryBuilder<Verse, Verse, QAfterWhereClause> surahNameEqualTo(
+      String surahName) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addWhereClause(IndexWhereClause.equalTo(
+        indexName: r'surahName',
+        value: [surahName],
+      ));
+    });
+  }
+
+  QueryBuilder<Verse, Verse, QAfterWhereClause> surahNameNotEqualTo(
+      String surahName) {
+    return QueryBuilder.apply(this, (query) {
+      if (query.whereSort == Sort.asc) {
+        return query
+            .addWhereClause(IndexWhereClause.between(
+              indexName: r'surahName',
+              lower: [],
+              upper: [surahName],
+              includeUpper: false,
+            ))
+            .addWhereClause(IndexWhereClause.between(
+              indexName: r'surahName',
+              lower: [surahName],
+              includeLower: false,
+              upper: [],
+            ));
+      } else {
+        return query
+            .addWhereClause(IndexWhereClause.between(
+              indexName: r'surahName',
+              lower: [surahName],
+              includeLower: false,
+              upper: [],
+            ))
+            .addWhereClause(IndexWhereClause.between(
+              indexName: r'surahName',
+              lower: [],
+              upper: [surahName],
+              includeUpper: false,
+            ));
+      }
     });
   }
 }

@@ -53,7 +53,86 @@ const VerseDataSchema = CollectionSchema(
   deserialize: _verseDataDeserialize,
   deserializeProp: _verseDataDeserializeProp,
   idName: r'id',
-  indexes: {},
+  indexes: {
+    r'surahNumber': IndexSchema(
+      id: 9024003441292455669,
+      name: r'surahNumber',
+      unique: false,
+      replace: false,
+      properties: [
+        IndexPropertySchema(
+          name: r'surahNumber',
+          type: IndexType.value,
+          caseSensitive: false,
+        )
+      ],
+    ),
+    r'verseNumber': IndexSchema(
+      id: 4187590259546384965,
+      name: r'verseNumber',
+      unique: false,
+      replace: false,
+      properties: [
+        IndexPropertySchema(
+          name: r'verseNumber',
+          type: IndexType.value,
+          caseSensitive: false,
+        )
+      ],
+    ),
+    r'wordNumber': IndexSchema(
+      id: 9022083973110192111,
+      name: r'wordNumber',
+      unique: false,
+      replace: false,
+      properties: [
+        IndexPropertySchema(
+          name: r'wordNumber',
+          type: IndexType.value,
+          caseSensitive: false,
+        )
+      ],
+    ),
+    r'sarf': IndexSchema(
+      id: -937242930999910678,
+      name: r'sarf',
+      unique: false,
+      replace: false,
+      properties: [
+        IndexPropertySchema(
+          name: r'sarf',
+          type: IndexType.hash,
+          caseSensitive: false,
+        )
+      ],
+    ),
+    r'irab': IndexSchema(
+      id: 5103487296632384825,
+      name: r'irab',
+      unique: false,
+      replace: false,
+      properties: [
+        IndexPropertySchema(
+          name: r'irab',
+          type: IndexType.hash,
+          caseSensitive: false,
+        )
+      ],
+    ),
+    r'wordMeaning': IndexSchema(
+      id: 5417588819744166599,
+      name: r'wordMeaning',
+      unique: false,
+      replace: false,
+      properties: [
+        IndexPropertySchema(
+          name: r'wordMeaning',
+          type: IndexType.hash,
+          caseSensitive: false,
+        )
+      ],
+    )
+  },
   links: {},
   embeddedSchemas: {},
   getId: _verseDataGetId,
@@ -148,6 +227,30 @@ extension VerseDataQueryWhereSort
       return query.addWhereClause(const IdWhereClause.any());
     });
   }
+
+  QueryBuilder<VerseData, VerseData, QAfterWhere> anySurahNumber() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addWhereClause(
+        const IndexWhereClause.any(indexName: r'surahNumber'),
+      );
+    });
+  }
+
+  QueryBuilder<VerseData, VerseData, QAfterWhere> anyVerseNumber() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addWhereClause(
+        const IndexWhereClause.any(indexName: r'verseNumber'),
+      );
+    });
+  }
+
+  QueryBuilder<VerseData, VerseData, QAfterWhere> anyWordNumber() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addWhereClause(
+        const IndexWhereClause.any(indexName: r'wordNumber'),
+      );
+    });
+  }
 }
 
 extension VerseDataQueryWhere
@@ -214,6 +317,411 @@ extension VerseDataQueryWhere
         upper: upperId,
         includeUpper: includeUpper,
       ));
+    });
+  }
+
+  QueryBuilder<VerseData, VerseData, QAfterWhereClause> surahNumberEqualTo(
+      int surahNumber) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addWhereClause(IndexWhereClause.equalTo(
+        indexName: r'surahNumber',
+        value: [surahNumber],
+      ));
+    });
+  }
+
+  QueryBuilder<VerseData, VerseData, QAfterWhereClause> surahNumberNotEqualTo(
+      int surahNumber) {
+    return QueryBuilder.apply(this, (query) {
+      if (query.whereSort == Sort.asc) {
+        return query
+            .addWhereClause(IndexWhereClause.between(
+              indexName: r'surahNumber',
+              lower: [],
+              upper: [surahNumber],
+              includeUpper: false,
+            ))
+            .addWhereClause(IndexWhereClause.between(
+              indexName: r'surahNumber',
+              lower: [surahNumber],
+              includeLower: false,
+              upper: [],
+            ));
+      } else {
+        return query
+            .addWhereClause(IndexWhereClause.between(
+              indexName: r'surahNumber',
+              lower: [surahNumber],
+              includeLower: false,
+              upper: [],
+            ))
+            .addWhereClause(IndexWhereClause.between(
+              indexName: r'surahNumber',
+              lower: [],
+              upper: [surahNumber],
+              includeUpper: false,
+            ));
+      }
+    });
+  }
+
+  QueryBuilder<VerseData, VerseData, QAfterWhereClause> surahNumberGreaterThan(
+    int surahNumber, {
+    bool include = false,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addWhereClause(IndexWhereClause.between(
+        indexName: r'surahNumber',
+        lower: [surahNumber],
+        includeLower: include,
+        upper: [],
+      ));
+    });
+  }
+
+  QueryBuilder<VerseData, VerseData, QAfterWhereClause> surahNumberLessThan(
+    int surahNumber, {
+    bool include = false,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addWhereClause(IndexWhereClause.between(
+        indexName: r'surahNumber',
+        lower: [],
+        upper: [surahNumber],
+        includeUpper: include,
+      ));
+    });
+  }
+
+  QueryBuilder<VerseData, VerseData, QAfterWhereClause> surahNumberBetween(
+    int lowerSurahNumber,
+    int upperSurahNumber, {
+    bool includeLower = true,
+    bool includeUpper = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addWhereClause(IndexWhereClause.between(
+        indexName: r'surahNumber',
+        lower: [lowerSurahNumber],
+        includeLower: includeLower,
+        upper: [upperSurahNumber],
+        includeUpper: includeUpper,
+      ));
+    });
+  }
+
+  QueryBuilder<VerseData, VerseData, QAfterWhereClause> verseNumberEqualTo(
+      int verseNumber) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addWhereClause(IndexWhereClause.equalTo(
+        indexName: r'verseNumber',
+        value: [verseNumber],
+      ));
+    });
+  }
+
+  QueryBuilder<VerseData, VerseData, QAfterWhereClause> verseNumberNotEqualTo(
+      int verseNumber) {
+    return QueryBuilder.apply(this, (query) {
+      if (query.whereSort == Sort.asc) {
+        return query
+            .addWhereClause(IndexWhereClause.between(
+              indexName: r'verseNumber',
+              lower: [],
+              upper: [verseNumber],
+              includeUpper: false,
+            ))
+            .addWhereClause(IndexWhereClause.between(
+              indexName: r'verseNumber',
+              lower: [verseNumber],
+              includeLower: false,
+              upper: [],
+            ));
+      } else {
+        return query
+            .addWhereClause(IndexWhereClause.between(
+              indexName: r'verseNumber',
+              lower: [verseNumber],
+              includeLower: false,
+              upper: [],
+            ))
+            .addWhereClause(IndexWhereClause.between(
+              indexName: r'verseNumber',
+              lower: [],
+              upper: [verseNumber],
+              includeUpper: false,
+            ));
+      }
+    });
+  }
+
+  QueryBuilder<VerseData, VerseData, QAfterWhereClause> verseNumberGreaterThan(
+    int verseNumber, {
+    bool include = false,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addWhereClause(IndexWhereClause.between(
+        indexName: r'verseNumber',
+        lower: [verseNumber],
+        includeLower: include,
+        upper: [],
+      ));
+    });
+  }
+
+  QueryBuilder<VerseData, VerseData, QAfterWhereClause> verseNumberLessThan(
+    int verseNumber, {
+    bool include = false,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addWhereClause(IndexWhereClause.between(
+        indexName: r'verseNumber',
+        lower: [],
+        upper: [verseNumber],
+        includeUpper: include,
+      ));
+    });
+  }
+
+  QueryBuilder<VerseData, VerseData, QAfterWhereClause> verseNumberBetween(
+    int lowerVerseNumber,
+    int upperVerseNumber, {
+    bool includeLower = true,
+    bool includeUpper = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addWhereClause(IndexWhereClause.between(
+        indexName: r'verseNumber',
+        lower: [lowerVerseNumber],
+        includeLower: includeLower,
+        upper: [upperVerseNumber],
+        includeUpper: includeUpper,
+      ));
+    });
+  }
+
+  QueryBuilder<VerseData, VerseData, QAfterWhereClause> wordNumberEqualTo(
+      int wordNumber) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addWhereClause(IndexWhereClause.equalTo(
+        indexName: r'wordNumber',
+        value: [wordNumber],
+      ));
+    });
+  }
+
+  QueryBuilder<VerseData, VerseData, QAfterWhereClause> wordNumberNotEqualTo(
+      int wordNumber) {
+    return QueryBuilder.apply(this, (query) {
+      if (query.whereSort == Sort.asc) {
+        return query
+            .addWhereClause(IndexWhereClause.between(
+              indexName: r'wordNumber',
+              lower: [],
+              upper: [wordNumber],
+              includeUpper: false,
+            ))
+            .addWhereClause(IndexWhereClause.between(
+              indexName: r'wordNumber',
+              lower: [wordNumber],
+              includeLower: false,
+              upper: [],
+            ));
+      } else {
+        return query
+            .addWhereClause(IndexWhereClause.between(
+              indexName: r'wordNumber',
+              lower: [wordNumber],
+              includeLower: false,
+              upper: [],
+            ))
+            .addWhereClause(IndexWhereClause.between(
+              indexName: r'wordNumber',
+              lower: [],
+              upper: [wordNumber],
+              includeUpper: false,
+            ));
+      }
+    });
+  }
+
+  QueryBuilder<VerseData, VerseData, QAfterWhereClause> wordNumberGreaterThan(
+    int wordNumber, {
+    bool include = false,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addWhereClause(IndexWhereClause.between(
+        indexName: r'wordNumber',
+        lower: [wordNumber],
+        includeLower: include,
+        upper: [],
+      ));
+    });
+  }
+
+  QueryBuilder<VerseData, VerseData, QAfterWhereClause> wordNumberLessThan(
+    int wordNumber, {
+    bool include = false,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addWhereClause(IndexWhereClause.between(
+        indexName: r'wordNumber',
+        lower: [],
+        upper: [wordNumber],
+        includeUpper: include,
+      ));
+    });
+  }
+
+  QueryBuilder<VerseData, VerseData, QAfterWhereClause> wordNumberBetween(
+    int lowerWordNumber,
+    int upperWordNumber, {
+    bool includeLower = true,
+    bool includeUpper = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addWhereClause(IndexWhereClause.between(
+        indexName: r'wordNumber',
+        lower: [lowerWordNumber],
+        includeLower: includeLower,
+        upper: [upperWordNumber],
+        includeUpper: includeUpper,
+      ));
+    });
+  }
+
+  QueryBuilder<VerseData, VerseData, QAfterWhereClause> sarfEqualTo(
+      String sarf) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addWhereClause(IndexWhereClause.equalTo(
+        indexName: r'sarf',
+        value: [sarf],
+      ));
+    });
+  }
+
+  QueryBuilder<VerseData, VerseData, QAfterWhereClause> sarfNotEqualTo(
+      String sarf) {
+    return QueryBuilder.apply(this, (query) {
+      if (query.whereSort == Sort.asc) {
+        return query
+            .addWhereClause(IndexWhereClause.between(
+              indexName: r'sarf',
+              lower: [],
+              upper: [sarf],
+              includeUpper: false,
+            ))
+            .addWhereClause(IndexWhereClause.between(
+              indexName: r'sarf',
+              lower: [sarf],
+              includeLower: false,
+              upper: [],
+            ));
+      } else {
+        return query
+            .addWhereClause(IndexWhereClause.between(
+              indexName: r'sarf',
+              lower: [sarf],
+              includeLower: false,
+              upper: [],
+            ))
+            .addWhereClause(IndexWhereClause.between(
+              indexName: r'sarf',
+              lower: [],
+              upper: [sarf],
+              includeUpper: false,
+            ));
+      }
+    });
+  }
+
+  QueryBuilder<VerseData, VerseData, QAfterWhereClause> irabEqualTo(
+      String irab) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addWhereClause(IndexWhereClause.equalTo(
+        indexName: r'irab',
+        value: [irab],
+      ));
+    });
+  }
+
+  QueryBuilder<VerseData, VerseData, QAfterWhereClause> irabNotEqualTo(
+      String irab) {
+    return QueryBuilder.apply(this, (query) {
+      if (query.whereSort == Sort.asc) {
+        return query
+            .addWhereClause(IndexWhereClause.between(
+              indexName: r'irab',
+              lower: [],
+              upper: [irab],
+              includeUpper: false,
+            ))
+            .addWhereClause(IndexWhereClause.between(
+              indexName: r'irab',
+              lower: [irab],
+              includeLower: false,
+              upper: [],
+            ));
+      } else {
+        return query
+            .addWhereClause(IndexWhereClause.between(
+              indexName: r'irab',
+              lower: [irab],
+              includeLower: false,
+              upper: [],
+            ))
+            .addWhereClause(IndexWhereClause.between(
+              indexName: r'irab',
+              lower: [],
+              upper: [irab],
+              includeUpper: false,
+            ));
+      }
+    });
+  }
+
+  QueryBuilder<VerseData, VerseData, QAfterWhereClause> wordMeaningEqualTo(
+      String wordMeaning) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addWhereClause(IndexWhereClause.equalTo(
+        indexName: r'wordMeaning',
+        value: [wordMeaning],
+      ));
+    });
+  }
+
+  QueryBuilder<VerseData, VerseData, QAfterWhereClause> wordMeaningNotEqualTo(
+      String wordMeaning) {
+    return QueryBuilder.apply(this, (query) {
+      if (query.whereSort == Sort.asc) {
+        return query
+            .addWhereClause(IndexWhereClause.between(
+              indexName: r'wordMeaning',
+              lower: [],
+              upper: [wordMeaning],
+              includeUpper: false,
+            ))
+            .addWhereClause(IndexWhereClause.between(
+              indexName: r'wordMeaning',
+              lower: [wordMeaning],
+              includeLower: false,
+              upper: [],
+            ));
+      } else {
+        return query
+            .addWhereClause(IndexWhereClause.between(
+              indexName: r'wordMeaning',
+              lower: [wordMeaning],
+              includeLower: false,
+              upper: [],
+            ))
+            .addWhereClause(IndexWhereClause.between(
+              indexName: r'wordMeaning',
+              lower: [],
+              upper: [wordMeaning],
+              includeUpper: false,
+            ));
+      }
     });
   }
 }

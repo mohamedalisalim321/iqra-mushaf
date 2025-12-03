@@ -1,17 +1,25 @@
 import 'package:flutter/material.dart';
 
 ThemeData lightMode = ThemeData(
+  scaffoldBackgroundColor: const Color(0xFFF4E9D8),
   colorScheme: const ColorScheme.light(
-    surface: Color.fromRGBO(245, 250, 240, 1),
-    secondary: Color.fromRGBO(30, 136, 34, 1),
-    primary: Color.fromRGBO(21, 101, 26, 1),
+    surface: Color(0xFFF4E9D8),
+    primary: Color(0xFF7A5C3A),
+    secondary: Color(0xFFD1A85A),
+    onSurface: Color(0xFF3B2F2F),
+    onPrimary: Colors.white,
+    onSecondary: Colors.white,
   ),
 );
 
 ThemeData darkMode = ThemeData(
-  colorScheme: ColorScheme.dark(
-    surface: const Color.fromARGB(255, 41, 41, 41),
-    secondary: Color.fromRGBO(30, 136, 34, 1),
-    primary: Color.fromRGBO(21, 101, 26, 1),
+  scaffoldBackgroundColor: const Color(0xFF2C241E),
+  colorScheme: const ColorScheme.dark(
+    surface: Color(0xFF3A2F26),
+    primary: Color(0xFFBFA476),
+    secondary: Color(0xFFD1A85A),
+    onSurface: Color(0xFFF2E4C7),
+    onPrimary: Colors.black,
+    onSecondary: Colors.black,
   ),
 );
