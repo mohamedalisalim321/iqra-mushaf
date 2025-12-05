@@ -1,11 +1,10 @@
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 
 import '../../components/quran/surah_header.dart';
+import '../../components/quran/verse_bottom_sheet.dart';
 import '../../database/surah_database.dart';
-import '../../database/verse_data_database.dart';
 import '../../models/quran/surah.dart';
 import '../../models/quran/verse.dart';
 import '../../providers/page_font_size.dart';
@@ -20,587 +19,396 @@ class SurahPage extends StatefulWidget {
 
 class _SurahPageState extends State<SurahPage>
     with SingleTickerProviderStateMixin {
-  List<Surah> surahs = [];
-
+  List<Surah> _surahs = [];
+  final Map<int, Widget> _pageCache = {};
   final List<LongPressGestureRecognizer> _recognizers = [];
-  late final PageController pageController;
-  late final TabController tabsController;
 
-  Verse? selectedVerse;
-  int selectedWordIndex = 0;
-  int currentPage = 1;
+  late PageController _pageController;
+
+  Verse? _selectedVerse;
+  int _currentPage = 1;
+  bool _isLoading = true;
 
   @override
   void initState() {
     super.initState();
-    currentPage = widget.surahIndex.clamp(1, 604);
-    pageController = PageController(initialPage: currentPage - 1);
-    tabsController = TabController(length: 3, vsync: this);
-    SystemChrome.setPreferredOrientations([DeviceOrientation.portraitUp]);
-    SystemChrome.setEnabledSystemUIMode(SystemUiMode.immersiveSticky);
-    loadSurahs();
+    _safeInit();
+  }
+
+  /// Ensures PageController is ALWAYS initialized
+  Future<void> _safeInit() async {
+    _currentPage = widget.surahIndex.clamp(1, 604);
+
+    // Initialize here safely
+    _pageController = PageController(initialPage: _currentPage - 1);
+
+    await _loadSurahs();
+    if (mounted) setState(() {});
   }
 
   @override
   void dispose() {
-    for (final r in _recognizers) {
-      r.dispose();
-    }
-    pageController.dispose();
-    SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
+    _disposeRecognizers();
+    _pageController.dispose();
     super.dispose();
   }
 
-  Future<void> loadSurahs() async {
+  void _disposeRecognizers() {
+    for (final r in _recognizers) {
+      r.dispose();
+    }
+    _recognizers.clear();
+  }
+
+  Future<void> _loadSurahs() async {
     try {
-      final list = await SurahDatabase.getAllSurahs();
+      final s = await SurahDatabase.getAllSurahs();
+      if (!mounted) return;
+
       setState(() {
-        surahs = list;
+        _surahs = s;
+        _isLoading = false;
       });
     } catch (e) {
-      debugPrint(e.toString());
+      debugPrint("ERROR LOADING SURAHS $e");
+      if (mounted) {
+        setState(() => _isLoading = false);
+      }
+      _showErrorSnackBar("Failed to load surahs");
     }
   }
 
-  void navigateToSurah(int surahIndex) {
-    int surahPageNum = SurahDatabase.getPageNumber(surahIndex, 1) - 1;
+  void _navigateToSurah(int surahIndex) {
+    final pageNumber = SurahDatabase.getPageNumber(surahIndex, 1) - 1;
 
-    setState(() {
-      currentPage = surahPageNum;
-      pageController.jumpToPage(
-        surahPageNum,
-      );
-    });
+    if (_pageController.hasClients) {
+      _pageController.jumpToPage(pageNumber);
+      setState(() => _currentPage = pageNumber + 1);
+      Navigator.pop(context);
+    }
   }
 
-  void showVerseSheet(Verse verse, String fontFamily) {
+  void _showErrorSnackBar(String message) {
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(message),
+        backgroundColor: Colors.red,
+        behavior: SnackBarBehavior.floating,
+      ),
+    );
+  }
+
+  void _showVerseSheet(Verse verse, String fontFamily) {
+    if (!mounted) return;
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
-      builder: (_) {
-        return StatefulBuilder(
-          builder: (context, setState) {
-            return Padding(
-              padding: const EdgeInsets.all(12),
-              child: SingleChildScrollView(
-                child: Column(
-                  children: [
-                    SingleChildScrollView(
-                      scrollDirection: Axis.horizontal,
-                      child: RichText(
-                        textDirection: TextDirection.rtl,
-                        textAlign: TextAlign.right,
-                        text: TextSpan(
-                          style: const TextStyle(
-                            fontSize: 24,
-                            color: Colors.black,
-                          ),
-                          children: verse.qcfData
-                              .split("")
-                              .asMap()
-                              .entries
-                              .map((entry) {
-                            final index = entry.key;
-                            final word = entry.value.replaceAll("\n", "");
-
-                            if (index ==
-                                verse.qcfData.split("").asMap().entries.length -
-                                    1) {
-                              return TextSpan(
-                                text: "$word ",
-                                style: TextStyle(
-                                  fontFamily: fontFamily,
-                                  backgroundColor: (selectedWordIndex == index)
-                                      ? Colors.red
-                                      : Colors.transparent,
-                                ),
-                              );
-                            }
-
-                            return TextSpan(
-                              text: "$word ",
-                              style: TextStyle(
-                                fontFamily: fontFamily,
-                                color: (selectedWordIndex == index)
-                                    ? Colors.red
-                                    : Colors.black,
-                              ),
-                              recognizer: LongPressGestureRecognizer()
-                                ..onLongPress = () {
-                                  setState(() {
-                                    selectedWordIndex = index;
-                                  });
-                                },
-                            );
-                          }).toList(),
-                        ),
-                      ),
-                    ),
-
-                    const SizedBox(height: 20),
-
-                    // --- Word Data Loader ---
-                    FutureBuilder(
-                      future: VerseDataDatabase.getVerseData(
-                        verse.surahNumber,
-                        verse.verseNumber,
-                        selectedWordIndex + 1,
-                      ),
-                      builder: (context, snapshot) {
-                        if (!snapshot.hasData) {
-                          return const Padding(
-                            padding: EdgeInsets.all(12),
-                            child: CircularProgressIndicator(),
-                          );
-                        }
-
-                        final data = snapshot.data!;
-
-                        return DefaultTabController(
-                          length: 3,
-                          child: Column(
-                            children: [
-                              TabBar(
-                                controller: tabsController,
-                                labelColor: Colors.blue,
-                                tabs: const [
-                                  Tab(text: "الصرف"),
-                                  Tab(text: "اﻷعراب"),
-                                  Tab(text: "المعني"),
-                                ],
-                              ),
-                              SizedBox(
-                                height: 200,
-                                child: TabBarView(
-                                  controller: tabsController,
-                                  children: [
-                                    Text(data.sarf),
-                                    Text(data.irab),
-                                    Text(data.wordMeaning),
-                                  ],
-                                ),
-                              ),
-                            ],
-                          ),
-                        );
-                      },
-                    ),
-                  ],
-                ),
-              ),
-            );
-          },
-        );
-      },
+      backgroundColor: Colors.transparent,
+      builder: (_) => VerseBottomSheet(
+        verse: verse,
+        fontFamily: fontFamily,
+      ),
     );
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(),
-      drawer: Drawer(
-        child: surahs.isEmpty
-            ? const Center(
-                child: CircularProgressIndicator(),
-              )
-            : ListView.builder(
-                itemCount: surahs.length,
-                itemBuilder: (context, index) {
-                  final surah = surahs[index];
-                  return ListTile(
-                    onTap: () => navigateToSurah(surah.surahIndex),
-                    title: CircleAvatar(
-                      radius: 24,
-                      child: Text(
-                        surah.surahIndex.toString(),
-                        style: TextStyle(
-                          // fontFamily: "Lateef",
-                          fontSize: 24.sp,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.white,
-                        ),
-                      ),
-                    ),
-                    trailing: Text(
-                      surah.surahName,
-                    ),
-                  );
-                },
-              ),
-      ),
-      body: PageView.builder(
-        controller: pageController,
-        reverse: true,
-        itemCount: 604,
-        onPageChanged: (page) {
-          setState(() {
-            currentPage = page + 1;
-            selectedVerse = null;
-          });
-        },
-        itemBuilder: (context, index) {
-          final pageNumber = index + 1;
+      backgroundColor: const Color(0xFFFBFAF7),
+      appBar: _buildAppBar(),
+      drawer: _buildDrawer(),
+      body: _buildPageView(),
+    );
+  }
 
-          return FutureBuilder(
-            future: _buildPage(pageNumber),
-            builder: (context, snap) {
-              if (!snap.hasData) {
-                return const Center(child: CircularProgressIndicator());
-              }
-              return snap.data!;
-            },
-          );
+  PreferredSizeWidget _buildAppBar() {
+    return AppBar(
+      title: Text("صفحة $_currentPage",
+          style: const TextStyle(fontWeight: FontWeight.w600)),
+      centerTitle: true,
+    );
+  }
+
+  Widget _buildDrawer() {
+    return Drawer(
+      child: Column(
+        children: [
+          _buildDrawerHeader(),
+          Expanded(
+            child: _isLoading
+                ? const Center(child: CircularProgressIndicator())
+                : _buildSurahList(),
+          )
+        ],
+      ),
+    );
+  }
+
+  Widget _buildDrawerHeader() {
+    return DrawerHeader(
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          colors: [
+            Theme.of(context).primaryColor,
+            Theme.of(context).colorScheme.secondary
+          ],
+        ),
+      ),
+      child: const Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(Icons.menu_book, size: 48, color: Colors.white),
+          SizedBox(height: 12),
+          Text(
+            'السور',
+            style: TextStyle(
+                fontSize: 28, fontWeight: FontWeight.bold, color: Colors.white),
+          )
+        ],
+      ),
+    );
+  }
+
+  Widget _buildSurahList() {
+    return ListView.separated(
+      padding: const EdgeInsets.symmetric(vertical: 8),
+      separatorBuilder: (_, __) => const Divider(height: 1, indent: 70),
+      itemCount: _surahs.length,
+      itemBuilder: (_, i) {
+        final s = _surahs[i];
+        final isCurrent = _isCurrentSurah(s.surahIndex);
+
+        return ListTile(
+          onTap: () => _navigateToSurah(s.surahIndex),
+          selected: isCurrent,
+          selectedTileColor: Theme.of(context).primaryColor.withOpacity(0.1),
+          leading: _buildSurahNumber(s.surahIndex, isCurrent),
+          title: Align(
+            alignment: Alignment.centerRight,
+            child: Text(s.surahName,
+                textDirection: TextDirection.rtl,
+                style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: isCurrent ? FontWeight.bold : FontWeight.w600)),
+          ),
+          subtitle: Align(
+            alignment: Alignment.centerRight,
+            child: Text(
+              "${s.versesCount} آية",
+              style: TextStyle(fontSize: 12, color: Colors.grey[600]),
+            ),
+          ),
+          trailing: Icon(Icons.arrow_forward_ios,
+              size: 16,
+              color: isCurrent ? Theme.of(context).primaryColor : null),
+        );
+      },
+    );
+  }
+
+  Widget _buildSurahNumber(int num, bool active) {
+    return Container(
+      width: 40,
+      height: 40,
+      decoration: BoxDecoration(
+        shape: BoxShape.circle,
+        gradient: active
+            ? LinearGradient(colors: [
+                Theme.of(context).primaryColor,
+                Theme.of(context).colorScheme.secondary
+              ])
+            : null,
+        color: active ? null : Theme.of(context).primaryColor,
+        boxShadow: active
+            ? [
+                BoxShadow(
+                    blurRadius: 8,
+                    color: Theme.of(context).primaryColor.withOpacity(.3),
+                    offset: const Offset(0, 2))
+              ]
+            : null,
+      ),
+      child: Center(
+        child: Text(
+          "$num",
+          style: const TextStyle(
+              color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold),
+        ),
+      ),
+    );
+  }
+
+  bool _isCurrentSurah(int surahIndex) {
+    final page = SurahDatabase.getPageNumber(surahIndex, 1);
+    return page == _currentPage;
+  }
+
+  Widget _buildPageView() {
+    return PageView.builder(
+      controller: _pageController,
+      reverse: true,
+      itemCount: 604,
+      onPageChanged: _onPageChanged,
+      itemBuilder: (_, i) => FutureBuilder<Widget>(
+        future: _buildPage(i + 1),
+        builder: (_, s) {
+          if (s.connectionState == ConnectionState.waiting) {
+            return const Center(child: CircularProgressIndicator());
+          }
+          if (s.hasError) return _buildErrorPage(i + 1);
+          return s.data ?? const SizedBox();
         },
       ),
     );
   }
 
-  // =============================
-  //  BUILD QURAN PAGE
-  // =============================
-  Future<Widget> _buildPage(int pageNumber) async {
-    final ranges = SurahDatabase.getPageData(pageNumber);
-    final pageFont = "QCF_P${pageNumber.toString().padLeft(3, '0')}";
-    final fontSize = getFontSize(pageNumber, context).sp;
+  Widget _buildErrorPage(int page) {
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(Icons.error, size: 64, color: Colors.red[300]),
+          const SizedBox(height: 8),
+          Text("Error loading page $page",
+              style:
+                  const TextStyle(fontWeight: FontWeight.w600, fontSize: 18)),
+          TextButton.icon(
+            onPressed: () => setState(() => _pageCache.remove(page)),
+            icon: const Icon(Icons.refresh),
+            label: const Text("Retry"),
+          )
+        ],
+      ),
+    );
+  }
+
+  void _onPageChanged(int page) {
+    setState(() {
+      _currentPage = page + 1;
+      _selectedVerse = null;
+    });
+    _manageCache();
+  }
+
+  void _manageCache() {
+    const max = 7;
+    const range = 3;
+
+    if (_pageCache.length <= max) return;
+
+    final remove =
+        _pageCache.keys.where((k) => (k - _currentPage).abs() > range).toList();
+
+    for (final k in remove) {
+      _pageCache.remove(k);
+      if (_pageCache.length <= max) break;
+    }
+  }
+
+  Future<Widget> _buildPage(int page) async {
+    if (_pageCache.containsKey(page)) return _pageCache[page]!;
+
+    final ranges = SurahDatabase.getPageData(page);
+    final font = "QCF_P${page.toString().padLeft(3, '0')}";
+    final fontSize = getFontSize(page, context).sp;
 
     final spans = <InlineSpan>[];
 
-    // Top spacing (same as mushaf)
-    if (pageNumber == 1 || pageNumber == 2) {
-      spans.add(const WidgetSpan(child: SizedBox(height: 120)));
+    if (page <= 2) {
+      spans.add(WidgetSpan(child: SizedBox(height: 110.h)));
     }
+
+    _disposeRecognizers();
 
     for (final r in ranges) {
-      final surah = r["surah"];
-      final start = r["start"];
-      final end = r["end"];
-
-      for (int v = start; v <= end; v++) {
-        // ===== SURAH HEADER + BASMALLAH =====
-        if (v == start && v == 1) {
-          spans.add(WidgetSpan(child: SurahHeader(suraNumber: surah)));
-
-          if (pageNumber != 1 && pageNumber != 187) {
-            spans.add(
-              TextSpan(
-                text: (surah == 97 ? "齃𧻓𥳐龎" : " ﱁ  ﱂﱃﱄ") + "\n",
-                style: TextStyle(
-                  fontFamily: surah == 97 ? "QCF_BSML" : "QCF_P001",
-                  fontSize: 22.sp,
-                ),
-              ),
-            );
-          }
-        }
-
-        // ===== VERSE TEXT =====
-        final verse =
-            await SurahDatabase.getVerseQcf(surah, v, verseEndSymbol: false);
-
-        // Special formatting for the first verse on a page
-        final qcf = (v == ranges.first["start"])
-            ? "${verse.qcfData[0]}\u200A${verse.qcfData.substring(1)}"
-            : verse.qcfData;
-
-        // Build recognizer
-        final recognizer = LongPressGestureRecognizer()
-          ..onLongPress = () {
-            setState(() => selectedVerse = verse);
-            showVerseSheet(verse, pageFont);
-          };
-        _recognizers.add(recognizer);
-
-        spans.add(
-          TextSpan(
-            text: qcf,
-            recognizer: recognizer,
-            style: TextStyle(
-              backgroundColor: (selectedVerse != null &&
-                      selectedVerse!.verseNumber == verse.verseNumber)
-                  ? Colors.blue.withOpacity(.25)
-                  : Colors.transparent,
-            ),
-          ),
-        );
-      }
+      await _addRange(spans, r, page, font);
     }
 
-    return SingleChildScrollView(
-      child: RichText(
-        textAlign: TextAlign.center,
-        textDirection: TextDirection.rtl,
-        text: TextSpan(
-          children: spans,
-          style: TextStyle(
-            fontFamily: pageFont,
-            fontSize: fontSize,
-            color: Colors.black,
-            height: 2,
-          ),
+    final widget = RichText(
+      textDirection: TextDirection.rtl,
+      textAlign: TextAlign.center,
+      text: TextSpan(
+        children: spans,
+        style: TextStyle(
+          fontFamily: font,
+          fontSize: fontSize,
+          height: 2,
+          color: Colors.black87,
+        ),
+      ),
+    );
+
+    _pageCache[page] = widget;
+    return widget;
+  }
+
+  Future<void> _addRange(
+    List<InlineSpan> spans,
+    Map<String, int> range,
+    int page,
+    String font,
+  ) async {
+    final surah = range["surah"]!;
+    final start = range["start"]!;
+    final end = range["end"]!;
+
+    for (int v = start; v <= end; v++) {
+      if (v == 1 && v == start) {
+        _addSurahHeader(spans, surah, page);
+      }
+
+      await _addVerse(spans, surah, v, font, isFirst: v == start);
+    }
+  }
+
+  void _addSurahHeader(List<InlineSpan> spans, int surah, int page) {
+    spans.add(WidgetSpan(child: SurahHeader(suraNumber: surah)));
+
+    if (page != 1 && page != 187) {
+      final special = surah == 97;
+      spans.add(TextSpan(
+        text: special ? "\n齃𧻓𥳐龎" : "\n ﱁ  ﱂﱃﱄ",
+        style: TextStyle(
+            fontFamily: special ? "QCF_BSML" : "QCF_P001", fontSize: 24.sp),
+      ));
+    }
+  }
+
+  Future<void> _addVerse(
+    List<InlineSpan> spans,
+    int surah,
+    int verse,
+    String font, {
+    required bool isFirst,
+  }) async {
+    final v = await SurahDatabase.getVerseQcf(surah, verse);
+
+    final txt =
+        isFirst ? "${v.qcfData[0]}\u200A${v.qcfData.substring(1)}" : v.qcfData;
+
+    final recognizer = LongPressGestureRecognizer()
+      ..onLongPress = () {
+        if (!mounted) return;
+        setState(() => _selectedVerse = v);
+        _showVerseSheet(v, font);
+      };
+
+    _recognizers.add(recognizer);
+
+    final isSelected = _selectedVerse != null &&
+        _selectedVerse!.surahNumber == v.surahNumber &&
+        _selectedVerse!.verseNumber == v.verseNumber;
+
+    spans.add(
+      TextSpan(
+        text: txt,
+        recognizer: recognizer,
+        style: TextStyle(
+          backgroundColor: isSelected ? Colors.yellow.withOpacity(.4) : null,
+          color: Colors.black,
         ),
       ),
     );
   }
 }
-
-
-// import 'package:flutter/gestures.dart';
-// import 'package:flutter/material.dart';
-// import 'package:flutter_screenutil/flutter_screenutil.dart';
-
-// import '../../components/quran/surah_header.dart';
-// import '../../database/surah_database.dart';
-// import '../../database/verse_data_database.dart';
-// import '../../models/quran/verse.dart';
-// import '../../providers/page_font_size.dart';
-
-// class SurahPage extends StatefulWidget {
-//   final int surahIndex;
-
-//   const SurahPage({super.key, required this.surahIndex});
-
-//   @override
-//   State<SurahPage> createState() => _SurahPageState();
-// }
-
-// class _SurahPageState extends State<SurahPage> {
-//   List<GlobalKey> richTextKeys = List.generate(604, (_) => GlobalKey());
-//   Verse? selectedVerse;
-//   int selectedWordIndex = 1;
-//   late final PageController pageController;
-//   int currentPageIndex = 1;
-
-//   final List<LongPressGestureRecognizer> _recognizers = [];
-
-//   @override
-//   void initState() {
-//     super.initState();
-//     currentPageIndex = widget.surahIndex.clamp(1, 604);
-//     pageController = PageController(initialPage: currentPageIndex - 1);
-//   }
-
-//   @override
-//   void dispose() {
-//     for (var r in _recognizers) {
-//       r.dispose();
-//     }
-//     pageController.dispose();
-//     super.dispose();
-//   }
-
-//   void showVerseSheet(Verse verse, String pageFont, double fontSize) {
-//     final words = verse.verseText.split(" ");
-//     final List<LongPressGestureRecognizer> wordRecognizers = [];
-
-//     showModalBottomSheet(
-//       context: context,
-//       builder: (context) {
-//         return StatefulBuilder(
-//           builder: (context, setState) {
-//             return Column(
-//               children: [
-//                 SingleChildScrollView(
-//                   padding: EdgeInsets.all(8),
-//                   scrollDirection: Axis.horizontal,
-//                   child: Row(
-//                     textDirection: TextDirection.rtl,
-//                     children: words.asMap().entries.map((entry) {
-//                       final int index = entry.key;
-//                       final String word = entry.value;
-
-//                       final recognizer = LongPressGestureRecognizer()
-//                         ..onLongPress = () {
-//                           setState(() {
-//                             selectedWordIndex = index;
-//                           });
-//                         };
-//                       wordRecognizers.add(recognizer);
-
-//                       return GestureDetector(
-//                         onTap: () {
-//                           setState(() {
-//                             selectedWordIndex = index;
-//                           });
-//                         },
-//                         child: Text(
-//                           word,
-//                           style: TextStyle(
-//                             color: Colors.black,
-//                             backgroundColor: selectedWordIndex == index
-//                                 ? Colors.red
-//                                 : Colors.transparent,
-//                           ),
-//                         ),
-//                       );
-//                     }).toList(),
-//                   ),
-//                 ),
-//                 FutureBuilder(
-//                   future: VerseDataDatabase.getVerseData(
-//                     verse.surahNumber,
-//                     verse.verseNumber,
-//                     selectedWordIndex + 1,
-//                   ),
-//                   builder: (context, snapshot) {
-//                     if (snapshot.connectionState == ConnectionState.waiting) {
-//                       return const CircularProgressIndicator();
-//                     }
-
-//                     final verseData = snapshot.data!;
-
-//                     return Column(
-//                       children: [
-//                         // Text(verseData.irab),
-//                         Text(verseData.sarf),
-//                         // Text(verseData.wordMeaning),
-//                       ],
-//                     );
-//                   },
-//                 )
-//               ],
-//             );
-//           },
-//         );
-//       },
-//     ).then((_) {
-//       for (var r in wordRecognizers) {
-//         r.dispose();
-//       }
-//     });
-//   }
-
-//   @override
-//   Widget build(BuildContext context) {
-//     return Scaffold(
-//       body: PageView.builder(
-//         controller: pageController,
-//         reverse: true,
-//         itemCount: 604,
-//         onPageChanged: (page) {
-//           setState(() {
-//             currentPageIndex = page + 1;
-//             selectedVerse = null;
-//           });
-//         },
-//         itemBuilder: (context, index) {
-//           final pageNumber = index + 1;
-
-//           return FutureBuilder<Widget>(
-//             future: _buildPage(pageNumber, context),
-//             builder: (context, snapshot) {
-//               if (!snapshot.hasData) {
-//                 return const Center(
-//                   child: CircularProgressIndicator(),
-//                 );
-//               }
-//               return snapshot.data!;
-//             },
-//           );
-//         },
-//       ),
-//     );
-//   }
-
-//   /// Builds a single QCF page asynchronously
-//   Future<Widget> _buildPage(int pageNumber, BuildContext context) async {
-//     final ranges = SurahDatabase.getPageData(pageNumber);
-//     final pageFont = "QCF_P${pageNumber.toString().padLeft(3, '0')}";
-//     final fontSize = getFontSize(pageNumber, context).sp;
-
-//     final List<InlineSpan> verseSpans = [];
-
-//     // Add top spacing for pages 1 and 2
-//     if (pageNumber == 1 || pageNumber == 2) {
-//       verseSpans.add(
-//         WidgetSpan(
-//           child: SizedBox(height: MediaQuery.of(context).size.height * .175),
-//         ),
-//       );
-//     }
-
-//     for (final r in ranges) {
-//       final surah = r['surah'];
-//       final start = r['start'];
-//       final end = r['end'];
-
-//       for (int v = start; v <= end; v++) {
-//         // Surah header + Basmallah
-//         if (v == start && v == 1) {
-//           verseSpans.add(
-//             WidgetSpan(
-//               child: SurahHeader(suraNumber: surah),
-//             ),
-//           );
-
-//           if (pageNumber != 1 && pageNumber != 187) {
-//             verseSpans.add(
-//               TextSpan(
-//                 text: surah == 97 ? "齃𧻓𥳐龎\n" : " ﱁ  ﱂﱃﱄ\n",
-//                 style: TextStyle(
-//                   fontFamily: surah == 97 ? "QCF_BSML" : "QCF_P001",
-//                   fontSize: (getScreenType(context) == ScreenType.large)
-//                       ? 13.2.sp
-//                       : surah == 97
-//                           ? 18.sp
-//                           : 24.sp,
-//                   color: Colors.black,
-//                 ),
-//               ),
-//             );
-//           }
-//         }
-
-//         // Load verse text
-//         final verse =
-//             await SurahDatabase.getVerseQcf(surah, v, verseEndSymbol: false);
-
-//         final formattedVerse = (v == ranges[0]["start"])
-//             ? "${verse.qcfData.substring(0, 1)}\u200A${verse.qcfData.substring(1)}"
-//             : verse.qcfData;
-
-//         // Create recognizer
-//         final recognizer = LongPressGestureRecognizer()
-//           ..onLongPress = () {
-//             setState(() {
-//               selectedVerse = verse;
-//             });
-//             showVerseSheet(verse, pageFont, fontSize);
-//           };
-//         _recognizers.add(recognizer);
-
-//         verseSpans.add(
-//           TextSpan(
-//             text: formattedVerse,
-//             recognizer: recognizer,
-//             style: TextStyle(
-//               backgroundColor: (selectedVerse != null)
-//                   ? (selectedVerse!.verseNumber == verse.verseNumber)
-//                       ? Colors.blue
-//                       : Colors.transparent
-//                   : Colors.transparent,
-//             ),
-//           ),
-//         );
-//       }
-//     }
-
-//     return SingleChildScrollView(
-//       child: RichText(
-//         key: richTextKeys[pageNumber - 1],
-//         locale: const Locale("ar"),
-//         textAlign: TextAlign.center,
-//         textDirection: TextDirection.rtl,
-//         text: TextSpan(
-//           children: verseSpans,
-//           style: TextStyle(
-//             fontFamily: pageFont,
-//             color: Colors.black,
-//             fontSize: fontSize,
-//             height: 2.h,
-//           ),
-//         ),
-//       ),
-//     );
-//   }
-// }

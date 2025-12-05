@@ -10,6 +10,7 @@ import 'services/notification_service.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  AppDatabase.clearAll();
   try {
     await AppDatabase.initialize();
   } catch (e) {
