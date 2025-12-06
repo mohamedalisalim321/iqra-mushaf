@@ -1,4 +1,4 @@
-const Map<String, String> _arabicNumbers = {
+const Map<String, String> _arabicDigits = {
   "0": "٠",
   "1": "١",
   "2": "٢",
@@ -11,20 +11,14 @@ const Map<String, String> _arabicNumbers = {
   "9": "٩",
 };
 
-extension ArabicNumberExtension on num {
-  String toArabicNumber() {
-    final str = toString();
-
-    return str.split("").map((char) {
-      // Keep non-digit characters (minus sign, decimal point, etc.)
-      return _arabicNumbers[char] ?? char;
-    }).join();
+extension ArabicDigitsStringExtension on String {
+  String toArabicDigits() {
+    return split('').map((char) => _arabicDigits[char] ?? char).join();
   }
 }
 
-convertToArabicNumber(int index) {
-  final digits = index.toString().split("");
-  final arabicNumeric =
-      digits.map((digit) => _arabicNumbers[digit] ?? digit).join();
-  return arabicNumeric;
+extension ArabicDigitsNumExtension on num {
+  String toArabicDigits() => toString().toArabicDigits();
 }
+
+String convertToArabicNumber(int number) => number.toArabicDigits();

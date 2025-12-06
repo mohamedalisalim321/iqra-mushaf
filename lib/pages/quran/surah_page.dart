@@ -35,11 +35,9 @@ class _SurahPageState extends State<SurahPage>
     _safeInit();
   }
 
-  /// Ensures PageController is ALWAYS initialized
   Future<void> _safeInit() async {
     _currentPage = widget.surahIndex.clamp(1, 604);
 
-    // Initialize here safely
     _pageController = PageController(initialPage: _currentPage - 1);
 
     await _loadSurahs();
@@ -48,16 +46,13 @@ class _SurahPageState extends State<SurahPage>
 
   @override
   void dispose() {
-    _disposeRecognizers();
-    _pageController.dispose();
-    super.dispose();
-  }
-
-  void _disposeRecognizers() {
     for (final r in _recognizers) {
       r.dispose();
     }
     _recognizers.clear();
+
+    _pageController.dispose();
+    super.dispose();
   }
 
   Future<void> _loadSurahs() async {
@@ -74,7 +69,7 @@ class _SurahPageState extends State<SurahPage>
       if (mounted) {
         setState(() => _isLoading = false);
       }
-      _showErrorSnackBar("Failed to load surahs");
+      _showErrorSnackBar("فشل تحميل السور");
     }
   }
 
@@ -92,9 +87,11 @@ class _SurahPageState extends State<SurahPage>
     if (!mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: Text(message),
-        backgroundColor: Colors.red,
+        elevation: 6,
+        content: Text(message, textAlign: TextAlign.center),
+        backgroundColor: Colors.red[700],
         behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       ),
     );
   }
@@ -104,10 +101,10 @@ class _SurahPageState extends State<SurahPage>
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
-      backgroundColor: Colors.transparent,
+      backgroundColor: Colors.black.withOpacity(0.2),
+      barrierColor: Colors.black54,
       builder: (_) => VerseBottomSheet(
         verse: verse,
-        fontFamily: fontFamily,
       ),
     );
   }
@@ -115,7 +112,7 @@ class _SurahPageState extends State<SurahPage>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFFBFAF7),
+      backgroundColor: const Color(0xFFF8F5EF),
       appBar: _buildAppBar(),
       drawer: _buildDrawer(),
       body: _buildPageView(),
@@ -124,29 +121,46 @@ class _SurahPageState extends State<SurahPage>
 
   PreferredSizeWidget _buildAppBar() {
     return AppBar(
-      title: Text("صفحة $_currentPage",
-          style: const TextStyle(fontWeight: FontWeight.w600)),
+      elevation: 1,
+      backgroundColor: Colors.white,
+      shadowColor: Colors.black12,
+      title: Text(
+        "صفحة $_currentPage",
+        style: const TextStyle(
+          fontWeight: FontWeight.w600,
+          fontSize: 20,
+          color: Colors.black87,
+        ),
+      ),
       centerTitle: true,
+      iconTheme: const IconThemeData(color: Colors.black87),
     );
   }
 
+  // ----------------------------------------------------
+  // Drawer UI
+  // ----------------------------------------------------
   Widget _buildDrawer() {
-    return Drawer(
-      child: Column(
-        children: [
-          _buildDrawerHeader(),
-          Expanded(
-            child: _isLoading
-                ? const Center(child: CircularProgressIndicator())
-                : _buildSurahList(),
-          )
-        ],
+    return ClipRRect(
+      borderRadius: const BorderRadius.horizontal(right: Radius.circular(20)),
+      child: Drawer(
+        elevation: 8,
+        child: Column(
+          children: [
+            _buildDrawerHeader(),
+            Expanded(
+              child: _isLoading
+                  ? const Center(child: CircularProgressIndicator())
+                  : _buildSurahList(),
+            )
+          ],
+        ),
       ),
     );
   }
 
   Widget _buildDrawerHeader() {
-    return DrawerHeader(
+    return Container(
       decoration: BoxDecoration(
         gradient: LinearGradient(
           colors: [
@@ -155,77 +169,100 @@ class _SurahPageState extends State<SurahPage>
           ],
         ),
       ),
-      child: const Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(Icons.menu_book, size: 48, color: Colors.white),
-          SizedBox(height: 12),
-          Text(
-            'السور',
-            style: TextStyle(
-                fontSize: 28, fontWeight: FontWeight.bold, color: Colors.white),
-          )
-        ],
+      child: const DrawerHeader(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(Icons.menu_book, size: 50, color: Colors.white),
+            SizedBox(height: 10),
+            Text(
+              'السور',
+              style: TextStyle(
+                fontSize: 30,
+                fontWeight: FontWeight.bold,
+                color: Colors.white,
+              ),
+            )
+          ],
+        ),
       ),
     );
   }
 
   Widget _buildSurahList() {
     return ListView.separated(
-      padding: const EdgeInsets.symmetric(vertical: 8),
-      separatorBuilder: (_, __) => const Divider(height: 1, indent: 70),
+      padding: const EdgeInsets.symmetric(vertical: 4),
+      separatorBuilder: (_, __) => Divider(
+          height: 1, indent: 60, endIndent: 10, color: Colors.grey[300]),
       itemCount: _surahs.length,
       itemBuilder: (_, i) {
         final s = _surahs[i];
         final isCurrent = _isCurrentSurah(s.surahIndex);
 
-        return ListTile(
-          onTap: () => _navigateToSurah(s.surahIndex),
-          selected: isCurrent,
-          selectedTileColor: Theme.of(context).primaryColor.withOpacity(0.1),
-          leading: _buildSurahNumber(s.surahIndex, isCurrent),
-          title: Align(
-            alignment: Alignment.centerRight,
-            child: Text(s.surahName,
-                textDirection: TextDirection.rtl,
-                style: TextStyle(
+        return MouseRegion(
+          cursor: SystemMouseCursors.click,
+          child: AnimatedContainer(
+            duration: const Duration(milliseconds: 150),
+            curve: Curves.easeOut,
+            color: isCurrent
+                ? Theme.of(context).primaryColor.withOpacity(0.1)
+                : Colors.transparent,
+            child: ListTile(
+              onTap: () => _navigateToSurah(s.surahIndex),
+              leading: _buildSurahNumber(s.surahIndex, isCurrent),
+              title: Align(
+                alignment: Alignment.centerRight,
+                child: Text(
+                  s.surahName,
+                  textDirection: TextDirection.rtl,
+                  style: TextStyle(
                     fontSize: 18,
-                    fontWeight: isCurrent ? FontWeight.bold : FontWeight.w600)),
-          ),
-          subtitle: Align(
-            alignment: Alignment.centerRight,
-            child: Text(
-              "${s.versesCount} آية",
-              style: TextStyle(fontSize: 12, color: Colors.grey[600]),
+                    fontWeight: isCurrent ? FontWeight.bold : FontWeight.w600,
+                  ),
+                ),
+              ),
+              subtitle: Align(
+                alignment: Alignment.centerRight,
+                child: Text(
+                  "${s.versesCount} آية",
+                  style: TextStyle(fontSize: 13, color: Colors.grey[600]),
+                ),
+              ),
+              trailing: Icon(
+                Icons.arrow_forward_ios,
+                size: 16,
+                color: isCurrent
+                    ? Theme.of(context).primaryColor
+                    : Colors.grey[600],
+              ),
             ),
           ),
-          trailing: Icon(Icons.arrow_forward_ios,
-              size: 16,
-              color: isCurrent ? Theme.of(context).primaryColor : null),
         );
       },
     );
   }
 
   Widget _buildSurahNumber(int num, bool active) {
-    return Container(
-      width: 40,
-      height: 40,
+    return AnimatedContainer(
+      duration: const Duration(milliseconds: 200),
+      width: 42,
+      height: 42,
       decoration: BoxDecoration(
         shape: BoxShape.circle,
         gradient: active
             ? LinearGradient(colors: [
                 Theme.of(context).primaryColor,
-                Theme.of(context).colorScheme.secondary
+                Theme.of(context).colorScheme.secondary,
               ])
             : null,
-        color: active ? null : Theme.of(context).primaryColor,
+        color: active ? null : Colors.grey[700],
         boxShadow: active
             ? [
                 BoxShadow(
-                    blurRadius: 8,
-                    color: Theme.of(context).primaryColor.withOpacity(.3),
-                    offset: const Offset(0, 2))
+                  blurRadius: 8,
+                  color: Theme.of(context).primaryColor.withOpacity(.3),
+                  offset: const Offset(0, 3),
+                )
               ]
             : null,
       ),
@@ -233,7 +270,10 @@ class _SurahPageState extends State<SurahPage>
         child: Text(
           "$num",
           style: const TextStyle(
-              color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold),
+            color: Colors.white,
+            fontSize: 16,
+            fontWeight: FontWeight.bold,
+          ),
         ),
       ),
     );
@@ -247,7 +287,7 @@ class _SurahPageState extends State<SurahPage>
   Widget _buildPageView() {
     return PageView.builder(
       controller: _pageController,
-      reverse: true,
+      reverse: false,
       itemCount: 604,
       onPageChanged: _onPageChanged,
       itemBuilder: (_, i) => FutureBuilder<Widget>(
@@ -264,22 +304,21 @@ class _SurahPageState extends State<SurahPage>
   }
 
   Widget _buildErrorPage(int page) {
-    return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(Icons.error, size: 64, color: Colors.red[300]),
-          const SizedBox(height: 8),
-          Text("Error loading page $page",
-              style:
-                  const TextStyle(fontWeight: FontWeight.w600, fontSize: 18)),
-          TextButton.icon(
-            onPressed: () => setState(() => _pageCache.remove(page)),
-            icon: const Icon(Icons.refresh),
-            label: const Text("Retry"),
-          )
-        ],
-      ),
+    return Column(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        Icon(Icons.error, size: 70, color: Colors.red[400]),
+        const SizedBox(height: 10),
+        Text(
+          "تعذّر تحميل الصفحة $page",
+          style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
+        ),
+        TextButton.icon(
+          onPressed: () => setState(() => _pageCache.remove(page)),
+          icon: const Icon(Icons.refresh),
+          label: const Text("إعادة المحاولة"),
+        ),
+      ],
     );
   }
 
@@ -288,27 +327,9 @@ class _SurahPageState extends State<SurahPage>
       _currentPage = page + 1;
       _selectedVerse = null;
     });
-    _manageCache();
-  }
-
-  void _manageCache() {
-    const max = 7;
-    const range = 3;
-
-    if (_pageCache.length <= max) return;
-
-    final remove =
-        _pageCache.keys.where((k) => (k - _currentPage).abs() > range).toList();
-
-    for (final k in remove) {
-      _pageCache.remove(k);
-      if (_pageCache.length <= max) break;
-    }
   }
 
   Future<Widget> _buildPage(int page) async {
-    if (_pageCache.containsKey(page)) return _pageCache[page]!;
-
     final ranges = SurahDatabase.getPageData(page);
     final font = "QCF_P${page.toString().padLeft(3, '0')}";
     final fontSize = getFontSize(page, context).sp;
@@ -319,7 +340,11 @@ class _SurahPageState extends State<SurahPage>
       spans.add(WidgetSpan(child: SizedBox(height: 110.h)));
     }
 
-    _disposeRecognizers();
+    // dispose old recognizers
+    for (final r in _recognizers) {
+      r.dispose();
+    }
+    _recognizers.clear();
 
     for (final r in ranges) {
       await _addRange(spans, r, page, font);
@@ -333,13 +358,12 @@ class _SurahPageState extends State<SurahPage>
         style: TextStyle(
           fontFamily: font,
           fontSize: fontSize,
-          height: 2,
-          color: Colors.black87,
+          height: 2.h,
+          color: Colors.black,
         ),
       ),
     );
 
-    _pageCache[page] = widget;
     return widget;
   }
 
@@ -363,15 +387,27 @@ class _SurahPageState extends State<SurahPage>
   }
 
   void _addSurahHeader(List<InlineSpan> spans, int surah, int page) {
-    spans.add(WidgetSpan(child: SurahHeader(suraNumber: surah)));
+    spans.add(
+      WidgetSpan(
+        child: Padding(
+          padding: EdgeInsets.symmetric(vertical: 12.h),
+          child: SurahHeader(suraNumber: surah),
+        ),
+      ),
+    );
 
     if (page != 1 && page != 187) {
       final special = surah == 97;
-      spans.add(TextSpan(
-        text: special ? "\n齃𧻓𥳐龎" : "\n ﱁ  ﱂﱃﱄ",
-        style: TextStyle(
-            fontFamily: special ? "QCF_BSML" : "QCF_P001", fontSize: 24.sp),
-      ));
+
+      spans.add(
+        TextSpan(
+          text: "${special ? "齃𧻓𥳐龎" : " ﱁ  ﱂﱃﱄ"}\n",
+          style: TextStyle(
+            fontFamily: special ? "QCF_BSML" : "QCF_P001",
+            fontSize: 26.sp,
+          ),
+        ),
+      );
     }
   }
 
@@ -405,7 +441,9 @@ class _SurahPageState extends State<SurahPage>
         text: txt,
         recognizer: recognizer,
         style: TextStyle(
-          backgroundColor: isSelected ? Colors.yellow.withOpacity(.4) : null,
+          backgroundColor: isSelected
+              ? Theme.of(context).colorScheme.secondary
+              : Colors.transparent,
           color: Colors.black,
         ),
       ),

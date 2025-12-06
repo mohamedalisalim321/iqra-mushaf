@@ -17,108 +17,95 @@ class SurahTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
+    final colors = Theme.of(context).colorScheme;
 
-    // Cache non-changing values to avoid repeated string operations on rebuilds
     final surahNum = convertToArabicNumber(surah.surahIndex);
     final ayahCount = convertToArabicNumber(surah.versesCount);
     final isMakki = surah.surahType == "مكية";
 
     return Padding(
-      padding: EdgeInsets.all(8.h),
-      child: ClipRRect(
+      padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 6.h),
+      child: Material(
+        color: colors.secondary,
         borderRadius: BorderRadius.circular(16.r),
-        child: Material(
-          color: colorScheme.secondary,
-          child: InkWell(
-            onTap: onTap,
-            borderRadius: BorderRadius.circular(16.r),
-            splashColor: colorScheme.surface.withOpacity(0.2),
-            child: Padding(
-              padding: EdgeInsets.all(8.w),
-              child: Row(
-                children: [
-                  CircleAvatar(
-                    backgroundColor: colorScheme.surface.withOpacity(0.15),
-                    radius: 24.r,
-                    child: Text(
-                      surahNum,
-                      style: TextStyle(
-                        // fontFamily: "Lateef",
-                        fontSize: 24.sp,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.white,
-                      ),
-                    ),
-                  ),
-
-                  SizedBox(width: 12.w),
-
-                  // 🔹 Main info (Expanded avoids layout overflows)
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        // Surah Arabic name (local font optimized)
-                        Text(
-                          "surah${surah.surahIndex.toString().padLeft(3, "0")}",
-                          style: TextStyle(
-                            fontFamily: "SurahName",
-                            fontSize: 22.sp,
-                            fontWeight: FontWeight.w400,
-                            color: Colors.white,
-                          ),
-                          overflow: TextOverflow.ellipsis,
-                        ),
-
-                        SizedBox(height: 4.h),
-
-                        // Ayah count + type
-                        Row(
-                          children: [
-                            Flexible(
-                              child: Text.rich(
-                                TextSpan(
-                                  children: [
-                                    TextSpan(
-                                      text: "عدد اﻷيات: $ayahCount - ",
-                                      style: TextStyle(
-                                        fontFamily: "Lateef",
-                                        fontSize: 16.sp,
-                                        color: Colors.white.withOpacity(0.9),
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                                maxLines: 1,
-                                overflow: TextOverflow.fade,
-                              ),
-                            ),
-                            Icon(
-                              isMakki
-                                  ? FlutterIslamicIcons.kaaba
-                                  : FlutterIslamicIcons.mosque,
-                              color: Colors.white,
-                              size: 16.sp,
-                            ),
-                          ],
-                        ),
-                      ],
-                    ),
-                  ),
-
-                  // 🔹 English Name
-                  Text(
-                    surah.surahNameTr,
-                    textDirection: TextDirection.ltr,
+        elevation: 3,
+        shadowColor: Colors.black26,
+        child: InkWell(
+          borderRadius: BorderRadius.circular(16.r),
+          onTap: onTap,
+          splashColor: colors.primary.withOpacity(0.1),
+          highlightColor: colors.primary.withOpacity(0.05),
+          child: Padding(
+            padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 10.h),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                CircleAvatar(
+                  backgroundColor: colors.surface.withOpacity(0.15),
+                  radius: 26.r,
+                  child: Text(
+                    surahNum,
                     style: TextStyle(
-                      fontFamily: "Raleway",
-                      fontSize: 10.sp,
-                      color: Colors.white70,
+                      fontSize: 22.sp,
+                      fontWeight: FontWeight.w700,
+                      color: colors.onSurface,
                     ),
                   ),
-                ],
-              ),
+                ),
+                SizedBox(width: 14.w),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        "surah${surah.surahIndex.toString().padLeft(3, '0')}",
+                        style: TextStyle(
+                          fontFamily: "SurahName",
+                          fontSize: 22.sp,
+                          color: colors.onSecondary,
+                          height: 1.1,
+                        ),
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                      SizedBox(height: 4.h),
+                      Row(
+                        children: [
+                          Expanded(
+                            child: Text(
+                              "عدد الآيات: $ayahCount",
+                              style: TextStyle(
+                                fontFamily: "Lateef",
+                                fontSize: 16.sp,
+                                color: colors.onSecondary.withOpacity(0.85),
+                              ),
+                              overflow: TextOverflow.fade,
+                              maxLines: 1,
+                            ),
+                          ),
+                          Icon(
+                            isMakki
+                                ? FlutterIslamicIcons.kaaba
+                                : FlutterIslamicIcons.mosque,
+                            size: 18.sp,
+                            color: colors.onSecondary,
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+                SizedBox(width: 10.w),
+                Text(
+                  surah.surahNameTr,
+                  textDirection: TextDirection.ltr,
+                  style: TextStyle(
+                    fontFamily: "Raleway",
+                    fontSize: 11.sp,
+                    fontWeight: FontWeight.w500,
+                    color: colors.onSecondary.withOpacity(0.75),
+                  ),
+                ),
+              ],
             ),
           ),
         ),

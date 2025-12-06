@@ -1,18 +1,16 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
-import 'package:iqra/utils/utils.dart';
 
 import '../../database/verse_data_database.dart';
 import '../../models/quran/verse.dart';
+import '../../utils/utils.dart';
 
 class VerseBottomSheet extends StatefulWidget {
   final Verse verse;
-  final String fontFamily;
 
   const VerseBottomSheet({
     super.key,
     required this.verse,
-    required this.fontFamily,
   });
 
   @override
@@ -41,137 +39,150 @@ class VerseBottomSheetState extends State<VerseBottomSheet>
 
   List<String> _parseCharacters() {
     final text =
-        "${widget.verse.verseText} ${widget.verse.verseNumber.toArabicNumber()}";
+        "${widget.verse.verseText} ${widget.verse.verseNumber.toArabicDigits()}";
 
-    return text.split(" ").where((char) => char.trim().isNotEmpty).toList();
+    return text.split(" ").where((c) => c.trim().isNotEmpty).toList();
   }
 
   void _onCharacterSelected(int index) {
     if (index < 0 || index >= _characters.length - 1) return;
+
     setState(() {
       _selectedCharIndex = index;
       _isLoading = true;
     });
-    Future.delayed(const Duration(milliseconds: 100), () {
-      if (mounted) {
-        setState(() => _isLoading = false);
-      }
+
+    Future.delayed(const Duration(milliseconds: 120), () {
+      if (mounted) setState(() => _isLoading = false);
     });
   }
 
   @override
   Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+
     return Container(
-      decoration: const BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      decoration: BoxDecoration(
+        color: scheme.surface,
+        borderRadius: BorderRadius.vertical(top: Radius.circular(22.r)),
       ),
       child: DraggableScrollableSheet(
-        initialChildSize: 0.7,
+        initialChildSize: 0.74,
         minChildSize: 0.5,
-        maxChildSize: 0.95,
+        maxChildSize: 0.97,
         expand: false,
-        builder: (context, scrollController) {
-          return Column(
-            children: [
-              _buildHandle(),
-              const Divider(height: 1),
-              _buildCharacterSelector(),
-              const SizedBox(height: 12),
-              Expanded(child: _buildWordDataSection()),
-            ],
-          );
-        },
+        builder: (_, controller) => Column(
+          children: [
+            _buildHandle(),
+            _buildCharacterSelector(),
+            Expanded(child: _buildWordDataSection()),
+          ],
+        ),
       ),
     );
   }
 
+  //--------------------------------------
+  // HANDLE
+  //--------------------------------------
   Widget _buildHandle() {
-    return Container(
-      margin: const EdgeInsets.only(top: 12, bottom: 8),
-      width: 40,
-      height: 4,
-      decoration: BoxDecoration(
-        color: Colors.grey[300],
-        borderRadius: BorderRadius.circular(2),
+    final scheme = Theme.of(context).colorScheme;
+
+    return Padding(
+      padding: EdgeInsets.only(top: 12.h, bottom: 8.h),
+      child: Container(
+        width: 45.w,
+        height: 5.h,
+        decoration: BoxDecoration(
+          color: scheme.primary.withOpacity(0.25),
+          borderRadius: BorderRadius.circular(4.r),
+        ),
       ),
     );
   }
 
+  //--------------------------------------
+  // CHARACTER SELECTOR
+  //--------------------------------------
   Widget _buildCharacterSelector() {
+    final scheme = Theme.of(context).colorScheme;
+
     return Container(
-      height: 100.h,
+      height: 90.h,
+      padding: EdgeInsets.symmetric(horizontal: 6.h),
       decoration: BoxDecoration(
-        color: Theme.of(context).colorScheme.surface,
+        color: scheme.surface,
       ),
       child: ListView.builder(
         scrollDirection: Axis.horizontal,
-        reverse: true,
+        reverse: false,
         itemCount: _characters.length,
-        itemBuilder: (context, index) {
-          final isSelected = _selectedCharIndex == index;
-
-          return _buildCharacterItem(
-            _characters[index],
-            index,
-            isSelected,
-          );
+        itemBuilder: (_, i) {
+          final selected = _selectedCharIndex == i;
+          return _buildCharacterItem(_characters[i], i, selected);
         },
       ),
     );
   }
 
-  Widget _buildCharacterItem(
-    String char,
-    int index,
-    bool isSelected,
-  ) {
+  Widget _buildCharacterItem(String char, int index, bool selected) {
+    final scheme = Theme.of(context).colorScheme;
+
     return GestureDetector(
       onTap: () => _onCharacterSelected(index),
-      child: Center(
-        child: Text(
-          "   $char   ",
-          style: TextStyle(
-            fontFamily: widget.fontFamily,
-            fontSize: 18,
-            color: (isSelected ? Colors.blue : Colors.black87),
-            fontWeight: FontWeight.normal,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 200),
+        padding: EdgeInsets.symmetric(horizontal: 4.h, vertical: 8.w),
+        margin: EdgeInsets.symmetric(horizontal: 2.h, vertical: 4.w),
+        decoration: BoxDecoration(
+          color:
+              selected ? scheme.primary.withOpacity(0.15) : Colors.transparent,
+          borderRadius: BorderRadius.circular(12.r),
+          border: selected ? Border.all(color: scheme.primary, width: 1) : null,
+        ),
+        child: Center(
+          child: Text(
+            char,
+            style: TextStyle(
+              fontFamily: "UthmanicHafs",
+              fontSize: 20.sp,
+              color: selected ? scheme.primary : scheme.onSurface,
+            ),
           ),
         ),
       ),
     );
   }
 
+  //--------------------------------------
+  // WORD DATA SECTION
+  //--------------------------------------
   Widget _buildWordDataSection() {
+    final scheme = Theme.of(context).colorScheme;
+
     return Column(
       children: [
         Container(
           decoration: BoxDecoration(
-            color: Colors.grey.shade50,
+            color: scheme.surface,
             border: Border(
-              bottom: BorderSide(color: Colors.grey.shade300),
+              bottom: BorderSide(color: scheme.primary.withOpacity(0.2)),
             ),
           ),
           child: TabBar(
             controller: _tabController,
-            labelColor: Colors.blue.shade700,
-            unselectedLabelColor: Colors.grey.shade600,
-            indicatorColor: Colors.blue.shade700,
+            labelColor: scheme.primary,
+            unselectedLabelColor: scheme.onSurface.withOpacity(0.5),
+            indicatorColor: scheme.primary,
             indicatorWeight: 3,
-            labelStyle: const TextStyle(
-              fontSize: 16,
-              fontWeight: FontWeight.bold,
+            labelStyle: TextStyle(
+              fontSize: 16.sp,
+              fontWeight: FontWeight.w600,
             ),
             tabs: const [
-              Tab(
-                text: "الصرف",
-              ),
-              Tab(
-                text: "الإعراب",
-              ),
-              Tab(
-                text: "المعنى",
-              ),
+              Tab(text: "الصرف"),
+              Tab(text: "الإعراب"),
+              Tab(text: "المعنى"),
             ],
           ),
         ),
@@ -184,6 +195,9 @@ class VerseBottomSheetState extends State<VerseBottomSheet>
     );
   }
 
+  //--------------------------------------
+  // FUTURE BUILDER
+  //--------------------------------------
   Widget _buildWordData() {
     return FutureBuilder(
       key: ValueKey(_selectedCharIndex),
@@ -192,7 +206,7 @@ class VerseBottomSheetState extends State<VerseBottomSheet>
         widget.verse.verseNumber,
         _selectedCharIndex + 1,
       ),
-      builder: (context, snapshot) {
+      builder: (_, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
           return const Center(child: CircularProgressIndicator());
         }
@@ -206,105 +220,82 @@ class VerseBottomSheetState extends State<VerseBottomSheet>
         return TabBarView(
           controller: _tabController,
           children: [
-            _buildDataCard(data.sarf, "الصرف", Icons.text_fields),
-            _buildDataCard(data.irab, "الإعراب", Icons.format_list_bulleted),
-            _buildDataCard(data.wordMeaning, "المعنى", Icons.translate),
+            _buildDataCard(data.sarf),
+            _buildDataCard(data.irab),
+            _buildDataCard(data.wordMeaning),
           ],
         );
       },
     );
   }
 
+  //--------------------------------------
+  // ERROR STATE
+  //--------------------------------------
   Widget _buildErrorState() {
+    final scheme = Theme.of(context).colorScheme;
+
     return Center(
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(Icons.info_outline, size: 64, color: Colors.grey.shade400),
-          const SizedBox(height: 16),
+          Icon(Icons.info_outline,
+              size: 60.w, color: scheme.primary.withOpacity(0.4)),
+          SizedBox(height: 16.w),
           Text(
-            'لا توجد بيانات متاحة',
+            "لا توجد بيانات متاحة",
             style: TextStyle(
-              fontSize: 18,
+              fontSize: 17,
               fontWeight: FontWeight.w500,
-              color: Colors.grey.shade700,
+              color: scheme.onSurface.withOpacity(0.8),
             ),
           ),
-          const SizedBox(height: 8),
+          SizedBox(height: 6.w),
           Text(
-            'اختر حرفاً آخر لعرض التفاصيل',
+            "اختر حرفاً آخر لعرض التفاصيل",
             style: TextStyle(
-              fontSize: 14,
-              color: Colors.grey.shade500,
+              fontSize: 14.sp,
+              color: scheme.onSurface.withOpacity(0.6),
             ),
-          ),
+          )
         ],
       ),
     );
   }
 
-  Widget _buildDataCard(String text, String title, IconData icon) {
-    if (text.isEmpty) {
-      return Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(icon, size: 48, color: Colors.grey.shade300),
-            const SizedBox(height: 12),
-            Text(
-              'لا توجد بيانات $title',
-              style: TextStyle(
-                fontSize: 16,
-                color: Colors.grey.shade600,
-              ),
-            ),
-          ],
-        ),
-      );
-    }
+  //--------------------------------------
+  // DATA CARD
+  //--------------------------------------
+  Widget _buildDataCard(String text) {
+    final scheme = Theme.of(context).colorScheme;
+    print(text);
 
     return SingleChildScrollView(
-      padding: const EdgeInsets.all(20),
+      padding: const EdgeInsets.all(22),
       child: Container(
-        padding: const EdgeInsets.all(20),
+        padding: const EdgeInsets.all(22),
         decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: Colors.grey.shade300),
+          color: scheme.surface,
+          borderRadius: BorderRadius.circular(18),
+          border: Border.all(color: scheme.primary.withOpacity(0.2)),
           boxShadow: [
             BoxShadow(
-              color: Colors.grey.withOpacity(0.1),
+              color: scheme.shadow.withOpacity(0.05),
               blurRadius: 10,
               offset: const Offset(0, 4),
-            ),
+            )
           ],
         ),
         child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Row(
-              children: [
-                Icon(icon, color: Colors.blue.shade700, size: 24),
-                const SizedBox(width: 8),
-                Text(
-                  title,
-                  style: TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.blue.shade700,
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 16),
-            const Divider(),
-            const SizedBox(height: 16),
             Text(
               text,
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: 17,
-                height: 2.0,
-                color: Colors.black87,
+                height: 2,
+                color: scheme.onSurface,
+                fontFamily: "Hafs",
                 letterSpacing: 0.3,
               ),
               textAlign: TextAlign.right,

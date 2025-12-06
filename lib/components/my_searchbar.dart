@@ -1,8 +1,11 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 
 class MySearchBar extends StatefulWidget {
   final TextEditingController controller;
   final void Function(String)? onSubmitted;
+  final void Function(String)? onChanged;
   final String hintText;
   final double borderRadius;
   final EdgeInsetsGeometry padding;
@@ -11,19 +14,22 @@ class MySearchBar extends StatefulWidget {
   final TextStyle? textStyle;
   final bool autofocus;
   final bool enableClearButton;
+  final Duration debounceDuration;
 
   const MySearchBar({
     super.key,
     required this.controller,
     this.onSubmitted,
+    this.onChanged,
     required this.hintText,
-    this.borderRadius = 14.0,
+    this.borderRadius = 14,
     this.padding = const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
     this.backgroundColor,
     this.hintStyle,
     this.textStyle,
     this.autofocus = false,
     this.enableClearButton = true,
+    this.debounceDuration = const Duration(milliseconds: 300),
   });
 
   @override
@@ -33,19 +39,33 @@ class MySearchBar extends StatefulWidget {
 class _MySearchBarState extends State<MySearchBar> {
   late final TextEditingController _controller;
   late final FocusNode _focusNode;
+  Timer? _debounce;
 
   @override
   void initState() {
     super.initState();
     _controller = widget.controller;
     _focusNode = FocusNode();
+
+    _controller.addListener(_onTextChanged);
   }
 
   @override
   void dispose() {
-    // Do NOT dispose _controller (it's owned by parent)
+    _debounce?.cancel();
     _focusNode.dispose();
     super.dispose();
+  }
+
+  void _onTextChanged() {
+    setState(() {}); // update clear button visibility
+
+    if (widget.onChanged != null) {
+      _debounce?.cancel();
+      _debounce = Timer(widget.debounceDuration, () {
+        widget.onChanged?.call(_controller.text.trim());
+      });
+    }
   }
 
   void _handleSubmit() {
@@ -53,8 +73,6 @@ class _MySearchBarState extends State<MySearchBar> {
     if (text.isEmpty) return;
 
     widget.onSubmitted?.call(text);
-
-    // Optional: unfocus after submit
     _focusNode.unfocus();
   }
 
@@ -69,12 +87,9 @@ class _MySearchBarState extends State<MySearchBar> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final backgroundColor = widget.backgroundColor ?? theme.cardColor;
-    final iconColor = theme.disabledColor;
+    final iconColor = theme.iconTheme.color?.withOpacity(0.6) ?? Colors.grey;
     final hintStyle = widget.hintStyle ??
-        TextStyle(
-          color: theme.hintColor,
-          fontSize: 15,
-        );
+        TextStyle(color: theme.hintColor, fontSize: 15.sp, height: 1.2.h);
     final textStyle = widget.textStyle ?? theme.textTheme.bodyMedium;
 
     return Container(
@@ -92,8 +107,8 @@ class _MySearchBarState extends State<MySearchBar> {
       ),
       child: Row(
         children: [
-          Icon(Icons.search, size: 22, color: iconColor),
-          const SizedBox(width: 10),
+          Icon(Icons.search, size: 22.h, color: iconColor),
+          SizedBox(width: 10.h),
           Expanded(
             child: TextField(
               focusNode: _focusNode,
@@ -118,13 +133,9 @@ class _MySearchBarState extends State<MySearchBar> {
                   FadeTransition(opacity: animation, child: child),
               child: _controller.text.isNotEmpty
                   ? GestureDetector(
+                      key: const ValueKey('clear'),
                       onTap: _clearText,
-                      child: Icon(
-                        Icons.close,
-                        size: 20,
-                        color: iconColor,
-                        key: const ValueKey('clear'),
-                      ),
+                      child: Icon(Icons.close, size: 20.sp, color: iconColor),
                     )
                   : const SizedBox.shrink(key: ValueKey('empty')),
             ),

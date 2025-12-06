@@ -27,10 +27,10 @@ class VerseDataDatabase {
         await _isar.verseDatas.putAll(parsedList);
       });
 
-      debugPrint(
+      print(
           "VerseData seeding completed. Total entries: ${await _isar.verseDatas.count()}");
     } catch (e, st) {
-      debugPrint("Error seeding VerseData: $e\n$st");
+      print("Error seeding VerseData: $e\n$st");
       throw Exception("Error seeding VerseData database: $e");
     }
   }
@@ -48,7 +48,7 @@ class VerseDataDatabase {
           .wordNumberEqualTo(wordNumber)
           .findFirst();
     } catch (e, st) {
-      debugPrint("Error fetching VerseData: $e\n$st");
+      print("Error fetching VerseData: $e\n$st");
       rethrow;
     }
   }

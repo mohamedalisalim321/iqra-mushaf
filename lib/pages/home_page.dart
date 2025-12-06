@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:iqra/pages/quran/surahs_page.dart';
-import 'package:iqra/services/notification_service.dart';
+
+import '../database/surah_database.dart';
+import '../services/notification_service.dart';
+import 'quran/surahs_page.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -30,9 +32,10 @@ class _HomePageState extends State<HomePage> {
             ),
             FilledButton(
               onPressed: () async {
+                final verse = await SurahDatabase.getRandomVerse();
                 await NotificationService.instance.show(
-                  title: "Hi",
-                  body: "Buy",
+                  title: verse!.surahName,
+                  body: verse.verseText,
                 );
               },
               child: const Text("Send A Notification"),

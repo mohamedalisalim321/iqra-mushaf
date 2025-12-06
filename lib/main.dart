@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:provider/provider.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
 
 import 'database/app_database.dart';
 import 'pages/home_page.dart';
@@ -10,7 +11,6 @@ import 'services/notification_service.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  AppDatabase.clearAll();
   try {
     await AppDatabase.initialize();
   } catch (e) {
@@ -44,11 +44,20 @@ class IqraApp extends StatelessWidget {
       splitScreenMode: true,
       designSize: const Size(392.727, 800.727),
       builder: (context, child) => MaterialApp(
-        //locale: Locale("ar"),
-        //supportedLocales: [Locale("ar"), Locale("en")],
+        locale: const Locale('ar'),
+        supportedLocales: const [
+          Locale('ar'),
+          Locale('en'),
+        ],
+        localizationsDelegates: const [
+          GlobalMaterialLocalizations.delegate,
+          GlobalWidgetsLocalizations.delegate,
+          GlobalCupertinoLocalizations.delegate,
+        ],
         debugShowCheckedModeBanner: false,
         home: const HomePage(),
         theme: Provider.of<ThemeProvider>(context).themeData,
+        themeMode: ThemeMode.dark,
       ),
     );
   }
