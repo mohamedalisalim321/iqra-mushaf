@@ -3,6 +3,7 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 
 import '../../database/verse_data_database.dart';
 import '../../models/quran/verse.dart';
+import '../../models/quran/verse_data.dart';
 import '../../utils/utils.dart';
 
 class VerseBottomSheet extends StatefulWidget {
@@ -21,20 +22,45 @@ class VerseBottomSheetState extends State<VerseBottomSheet>
     with SingleTickerProviderStateMixin {
   late final TabController _tabController;
   late final List<String> _characters;
+  late final ScrollController _scrollController;
+
+  List<VerseData>? _cachedVerseData;
+  bool _loadingData = true;
+
   int _selectedCharIndex = 0;
-  bool _isLoading = false;
 
   @override
   void initState() {
     super.initState();
+
     _tabController = TabController(length: 3, vsync: this);
+    _scrollController = ScrollController();
     _characters = _parseCharacters();
+
+    _loadAndCacheVerseData();
   }
 
   @override
   void dispose() {
     _tabController.dispose();
+    _scrollController.dispose();
     super.dispose();
+  }
+
+  Future<void> _loadAndCacheVerseData() async {
+    setState(() => _loadingData = true);
+
+    final data = await VerseDataDatabase.getVerseWords(
+      widget.verse.surahNumber,
+      widget.verse.verseNumber,
+    );
+
+    if (!mounted) return;
+
+    setState(() {
+      _cachedVerseData = data;
+      _loadingData = false;
+    });
   }
 
   List<String> _parseCharacters() {
@@ -45,15 +71,12 @@ class VerseBottomSheetState extends State<VerseBottomSheet>
   }
 
   void _onCharacterSelected(int index) {
-    if (index < 0 || index >= _characters.length - 1) return;
+    if (index < 0 ||
+        index >= _characters.length - 1 ||
+        index == _selectedCharIndex) return;
 
     setState(() {
       _selectedCharIndex = index;
-      _isLoading = true;
-    });
-
-    Future.delayed(const Duration(milliseconds: 120), () {
-      if (mounted) setState(() => _isLoading = false);
     });
   }
 
@@ -73,21 +96,16 @@ class VerseBottomSheetState extends State<VerseBottomSheet>
         expand: false,
         builder: (_, controller) => Column(
           children: [
-            _buildHandle(),
-            _buildCharacterSelector(),
-            Expanded(child: _buildWordDataSection()),
+            _buildHandle(scheme),
+            _buildCharacterSelector(scheme),
+            Expanded(child: _buildWordDataSection(scheme)),
           ],
         ),
       ),
     );
   }
 
-  //--------------------------------------
-  // HANDLE
-  //--------------------------------------
-  Widget _buildHandle() {
-    final scheme = Theme.of(context).colorScheme;
-
+  Widget _buildHandle(ColorScheme scheme) {
     return Padding(
       padding: EdgeInsets.only(top: 12.h, bottom: 8.h),
       child: Container(
@@ -101,55 +119,28 @@ class VerseBottomSheetState extends State<VerseBottomSheet>
     );
   }
 
-  //--------------------------------------
-  // CHARACTER SELECTOR
-  //--------------------------------------
-  Widget _buildCharacterSelector() {
-    final scheme = Theme.of(context).colorScheme;
-
+  Widget _buildCharacterSelector(ColorScheme scheme) {
     return Container(
       height: 90.h,
+      decoration: const BoxDecoration(
+        color: Colors.white,
+      ),
       padding: EdgeInsets.symmetric(horizontal: 6.h),
-      decoration: BoxDecoration(
-        color: scheme.surface,
-      ),
       child: ListView.builder(
+        controller: _scrollController,
         scrollDirection: Axis.horizontal,
-        reverse: false,
         itemCount: _characters.length,
+        itemExtent: null,
+        cacheExtent: 500,
         itemBuilder: (_, i) {
-          final selected = _selectedCharIndex == i;
-          return _buildCharacterItem(_characters[i], i, selected);
+          return _CharacterItem(
+            character: _characters[i],
+            index: i,
+            isSelected: _selectedCharIndex == i,
+            onTap: _onCharacterSelected,
+            scheme: scheme,
+          );
         },
-      ),
-    );
-  }
-
-  Widget _buildCharacterItem(String char, int index, bool selected) {
-    final scheme = Theme.of(context).colorScheme;
-
-    return GestureDetector(
-      onTap: () => _onCharacterSelected(index),
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 200),
-        padding: EdgeInsets.symmetric(horizontal: 4.h, vertical: 8.w),
-        margin: EdgeInsets.symmetric(horizontal: 2.h, vertical: 4.w),
-        decoration: BoxDecoration(
-          color:
-              selected ? scheme.primary.withOpacity(0.15) : Colors.transparent,
-          borderRadius: BorderRadius.circular(12.r),
-          border: selected ? Border.all(color: scheme.primary, width: 1) : null,
-        ),
-        child: Center(
-          child: Text(
-            char,
-            style: TextStyle(
-              fontFamily: "UthmanicHafs",
-              fontSize: 20.sp,
-              color: selected ? scheme.primary : scheme.onSurface,
-            ),
-          ),
-        ),
       ),
     );
   }
@@ -157,28 +148,26 @@ class VerseBottomSheetState extends State<VerseBottomSheet>
   //--------------------------------------
   // WORD DATA SECTION
   //--------------------------------------
-  Widget _buildWordDataSection() {
-    final scheme = Theme.of(context).colorScheme;
+  Widget _buildWordDataSection(ColorScheme scheme) {
+    if (_loadingData) {
+      return const Center(child: CircularProgressIndicator());
+    }
 
     return Column(
       children: [
         Container(
           decoration: BoxDecoration(
-            color: scheme.surface,
             border: Border(
               bottom: BorderSide(color: scheme.primary.withOpacity(0.2)),
             ),
           ),
           child: TabBar(
+            indicatorSize: TabBarIndicatorSize.tab,
             controller: _tabController,
             labelColor: scheme.primary,
             unselectedLabelColor: scheme.onSurface.withOpacity(0.5),
             indicatorColor: scheme.primary,
             indicatorWeight: 3,
-            labelStyle: TextStyle(
-              fontSize: 16.sp,
-              fontWeight: FontWeight.w600,
-            ),
             tabs: const [
               Tab(text: "الصرف"),
               Tab(text: "الإعراب"),
@@ -186,55 +175,36 @@ class VerseBottomSheetState extends State<VerseBottomSheet>
             ],
           ),
         ),
-        Expanded(
-          child: _isLoading
-              ? const Center(child: CircularProgressIndicator())
-              : _buildWordData(),
-        ),
+        Expanded(child: _buildWordData(scheme)),
       ],
     );
   }
 
   //--------------------------------------
-  // FUTURE BUILDER
+  // CACHED WORD-DATA READER
   //--------------------------------------
-  Widget _buildWordData() {
-    return FutureBuilder(
-      key: ValueKey(_selectedCharIndex),
-      future: VerseDataDatabase.getVerseData(
-        widget.verse.surahNumber,
-        widget.verse.verseNumber,
-        _selectedCharIndex + 1,
-      ),
-      builder: (_, snapshot) {
-        if (snapshot.connectionState == ConnectionState.waiting) {
-          return const Center(child: CircularProgressIndicator());
-        }
+  Widget _buildWordData(ColorScheme scheme) {
+    if (_cachedVerseData == null || _cachedVerseData!.isEmpty) {
+      return _buildErrorState(scheme);
+    }
 
-        if (snapshot.hasError || !snapshot.hasData) {
-          return _buildErrorState();
-        }
+    final safeIndex = _selectedCharIndex.clamp(0, _cachedVerseData!.length - 1);
+    final data = _cachedVerseData![safeIndex];
 
-        final data = snapshot.data!;
-
-        return TabBarView(
-          controller: _tabController,
-          children: [
-            _buildDataCard(data.sarf),
-            _buildDataCard(data.irab),
-            _buildDataCard(data.wordMeaning),
-          ],
-        );
-      },
+    return TabBarView(
+      controller: _tabController,
+      children: [
+        _DataCard(text: data.sarf, scheme: scheme),
+        _DataCard(text: data.irab, scheme: scheme),
+        _DataCard(text: data.wordMeaning, scheme: scheme),
+      ],
     );
   }
 
   //--------------------------------------
-  // ERROR STATE
+  // ERROR
   //--------------------------------------
-  Widget _buildErrorState() {
-    final scheme = Theme.of(context).colorScheme;
-
+  Widget _buildErrorState(ColorScheme scheme) {
     return Center(
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
@@ -262,14 +232,58 @@ class VerseBottomSheetState extends State<VerseBottomSheet>
       ),
     );
   }
+}
 
-  //--------------------------------------
-  // DATA CARD
-  //--------------------------------------
-  Widget _buildDataCard(String text) {
-    final scheme = Theme.of(context).colorScheme;
-    print(text);
+//--------------------------------------
+// STATELESS CHARACTER ITEM (PERFORMANCE)
+//--------------------------------------
+class _CharacterItem extends StatelessWidget {
+  final String character;
+  final int index;
+  final bool isSelected;
+  final ValueChanged<int> onTap;
+  final ColorScheme scheme;
 
+  const _CharacterItem({
+    required this.character,
+    required this.index,
+    required this.isSelected,
+    required this.onTap,
+    required this.scheme,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: () => onTap(index),
+      child: Center(
+        child: Text(
+          " $character ",
+          style: TextStyle(
+            fontFamily: "UthmanicHafs",
+            fontSize: 20.sp,
+            color: isSelected ? scheme.primary : scheme.onSurface,
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+//--------------------------------------
+// STATELESS DATA CARD (PERFORMANCE)
+//--------------------------------------
+class _DataCard extends StatelessWidget {
+  final String text;
+  final ColorScheme scheme;
+
+  const _DataCard({
+    required this.text,
+    required this.scheme,
+  });
+
+  @override
+  Widget build(BuildContext context) {
     return SingleChildScrollView(
       padding: const EdgeInsets.all(22),
       child: Container(
@@ -286,22 +300,16 @@ class VerseBottomSheetState extends State<VerseBottomSheet>
             )
           ],
         ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              text,
-              style: TextStyle(
-                fontSize: 17,
-                height: 2,
-                color: scheme.onSurface,
-                fontFamily: "Hafs",
-                letterSpacing: 0.3,
-              ),
-              textAlign: TextAlign.right,
-              textDirection: TextDirection.rtl,
-            ),
-          ],
+        child: Text(
+          text,
+          style: TextStyle(
+            fontSize: 17,
+            height: 2,
+            color: scheme.onSurface,
+            fontFamily: "UthmanicHafs",
+          ),
+          textAlign: TextAlign.right,
+          textDirection: TextDirection.rtl,
         ),
       ),
     );

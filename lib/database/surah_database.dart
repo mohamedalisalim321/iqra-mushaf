@@ -46,7 +46,9 @@ class SurahDatabase {
           ..versesCount = s['verses_count'] as int? ?? 0
           ..revelationOrder = s['revelationOrder'] as int? ?? 0
           ..words = s['words'] as int? ?? 0
-          ..letters = s['letters'] as int? ?? 0;
+          ..letters = s['letters'] as int? ?? 0
+          ..firstPage = getPageNumber(s['id'], 1)
+          ..lastPage = getPageNumber(s['id'], s['verses_count']);
 
         final versesList = s['verses'] as List?;
         if (versesList == null) continue;

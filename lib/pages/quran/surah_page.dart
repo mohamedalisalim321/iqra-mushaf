@@ -5,13 +5,12 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import '../../components/quran/surah_header.dart';
 import '../../components/quran/verse_bottom_sheet.dart';
 import '../../database/surah_database.dart';
-import '../../models/quran/surah.dart';
 import '../../models/quran/verse.dart';
 import '../../providers/page_font_size.dart';
 
 class SurahPage extends StatefulWidget {
-  final int surahIndex;
-  const SurahPage({super.key, required this.surahIndex});
+  final int pageNumber;
+  const SurahPage({super.key, required this.pageNumber});
 
   @override
   State<SurahPage> createState() => _SurahPageState();
@@ -19,7 +18,6 @@ class SurahPage extends StatefulWidget {
 
 class _SurahPageState extends State<SurahPage>
     with SingleTickerProviderStateMixin {
-  List<Surah> _surahs = [];
   final Map<int, Widget> _pageCache = {};
   final List<LongPressGestureRecognizer> _recognizers = [];
 
@@ -27,7 +25,6 @@ class _SurahPageState extends State<SurahPage>
 
   Verse? _selectedVerse;
   int _currentPage = 1;
-  bool _isLoading = true;
 
   @override
   void initState() {
@@ -36,11 +33,10 @@ class _SurahPageState extends State<SurahPage>
   }
 
   Future<void> _safeInit() async {
-    _currentPage = widget.surahIndex.clamp(1, 604);
+    _currentPage = widget.pageNumber.clamp(1, 604);
 
     _pageController = PageController(initialPage: _currentPage - 1);
 
-    await _loadSurahs();
     if (mounted) setState(() {});
   }
 
@@ -53,47 +49,6 @@ class _SurahPageState extends State<SurahPage>
 
     _pageController.dispose();
     super.dispose();
-  }
-
-  Future<void> _loadSurahs() async {
-    try {
-      final s = await SurahDatabase.getAllSurahs();
-      if (!mounted) return;
-
-      setState(() {
-        _surahs = s;
-        _isLoading = false;
-      });
-    } catch (e) {
-      debugPrint("ERROR LOADING SURAHS $e");
-      if (mounted) {
-        setState(() => _isLoading = false);
-      }
-      _showErrorSnackBar("فشل تحميل السور");
-    }
-  }
-
-  void _navigateToSurah(int surahIndex) {
-    final pageNumber = SurahDatabase.getPageNumber(surahIndex, 1) - 1;
-
-    if (_pageController.hasClients) {
-      _pageController.jumpToPage(pageNumber);
-      setState(() => _currentPage = pageNumber + 1);
-      Navigator.pop(context);
-    }
-  }
-
-  void _showErrorSnackBar(String message) {
-    if (!mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        elevation: 6,
-        content: Text(message, textAlign: TextAlign.center),
-        backgroundColor: Colors.red[700],
-        behavior: SnackBarBehavior.floating,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-      ),
-    );
   }
 
   void _showVerseSheet(Verse verse, String fontFamily) {
@@ -114,7 +69,6 @@ class _SurahPageState extends State<SurahPage>
     return Scaffold(
       backgroundColor: const Color(0xFFF8F5EF),
       appBar: _buildAppBar(),
-      drawer: _buildDrawer(),
       body: _buildPageView(),
     );
   }
@@ -137,169 +91,29 @@ class _SurahPageState extends State<SurahPage>
     );
   }
 
-  // ----------------------------------------------------
-  // Drawer UI
-  // ----------------------------------------------------
-  Widget _buildDrawer() {
-    return ClipRRect(
-      borderRadius: const BorderRadius.horizontal(right: Radius.circular(20)),
-      child: Drawer(
-        elevation: 8,
-        child: Column(
-          children: [
-            _buildDrawerHeader(),
-            Expanded(
-              child: _isLoading
-                  ? const Center(child: CircularProgressIndicator())
-                  : _buildSurahList(),
-            )
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildDrawerHeader() {
-    return Container(
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          colors: [
-            Theme.of(context).primaryColor,
-            Theme.of(context).colorScheme.secondary
-          ],
-        ),
-      ),
-      child: const DrawerHeader(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(Icons.menu_book, size: 50, color: Colors.white),
-            SizedBox(height: 10),
-            Text(
-              'السور',
-              style: TextStyle(
-                fontSize: 30,
-                fontWeight: FontWeight.bold,
-                color: Colors.white,
-              ),
-            )
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildSurahList() {
-    return ListView.separated(
-      padding: const EdgeInsets.symmetric(vertical: 4),
-      separatorBuilder: (_, __) => Divider(
-          height: 1, indent: 60, endIndent: 10, color: Colors.grey[300]),
-      itemCount: _surahs.length,
-      itemBuilder: (_, i) {
-        final s = _surahs[i];
-        final isCurrent = _isCurrentSurah(s.surahIndex);
-
-        return MouseRegion(
-          cursor: SystemMouseCursors.click,
-          child: AnimatedContainer(
-            duration: const Duration(milliseconds: 150),
-            curve: Curves.easeOut,
-            color: isCurrent
-                ? Theme.of(context).primaryColor.withOpacity(0.1)
-                : Colors.transparent,
-            child: ListTile(
-              onTap: () => _navigateToSurah(s.surahIndex),
-              leading: _buildSurahNumber(s.surahIndex, isCurrent),
-              title: Align(
-                alignment: Alignment.centerRight,
-                child: Text(
-                  s.surahName,
-                  textDirection: TextDirection.rtl,
-                  style: TextStyle(
-                    fontSize: 18,
-                    fontWeight: isCurrent ? FontWeight.bold : FontWeight.w600,
-                  ),
-                ),
-              ),
-              subtitle: Align(
-                alignment: Alignment.centerRight,
-                child: Text(
-                  "${s.versesCount} آية",
-                  style: TextStyle(fontSize: 13, color: Colors.grey[600]),
-                ),
-              ),
-              trailing: Icon(
-                Icons.arrow_forward_ios,
-                size: 16,
-                color: isCurrent
-                    ? Theme.of(context).primaryColor
-                    : Colors.grey[600],
-              ),
+  Widget _buildPageView() {
+    return Column(
+      children: [
+        Expanded(
+          child: PageView.builder(
+            controller: _pageController,
+            reverse: false,
+            itemCount: 604,
+            onPageChanged: _onPageChanged,
+            itemBuilder: (_, i) => FutureBuilder<Widget>(
+              future: _buildPage(i + 1),
+              builder: (_, s) {
+                if (s.connectionState == ConnectionState.waiting) {
+                  return const Center(child: CircularProgressIndicator());
+                }
+                if (s.hasError) return _buildErrorPage(i + 1);
+                return s.data ?? const SizedBox();
+              },
             ),
           ),
-        );
-      },
-    );
-  }
-
-  Widget _buildSurahNumber(int num, bool active) {
-    return AnimatedContainer(
-      duration: const Duration(milliseconds: 200),
-      width: 42,
-      height: 42,
-      decoration: BoxDecoration(
-        shape: BoxShape.circle,
-        gradient: active
-            ? LinearGradient(colors: [
-                Theme.of(context).primaryColor,
-                Theme.of(context).colorScheme.secondary,
-              ])
-            : null,
-        color: active ? null : Colors.grey[700],
-        boxShadow: active
-            ? [
-                BoxShadow(
-                  blurRadius: 8,
-                  color: Theme.of(context).primaryColor.withOpacity(.3),
-                  offset: const Offset(0, 3),
-                )
-              ]
-            : null,
-      ),
-      child: Center(
-        child: Text(
-          "$num",
-          style: const TextStyle(
-            color: Colors.white,
-            fontSize: 16,
-            fontWeight: FontWeight.bold,
-          ),
         ),
-      ),
-    );
-  }
-
-  bool _isCurrentSurah(int surahIndex) {
-    final page = SurahDatabase.getPageNumber(surahIndex, 1);
-    return page == _currentPage;
-  }
-
-  Widget _buildPageView() {
-    return PageView.builder(
-      controller: _pageController,
-      reverse: false,
-      itemCount: 604,
-      onPageChanged: _onPageChanged,
-      itemBuilder: (_, i) => FutureBuilder<Widget>(
-        future: _buildPage(i + 1),
-        builder: (_, s) {
-          if (s.connectionState == ConnectionState.waiting) {
-            return const Center(child: CircularProgressIndicator());
-          }
-          if (s.hasError) return _buildErrorPage(i + 1);
-          return s.data ?? const SizedBox();
-        },
-      ),
+        Text(_currentPage.toString()),
+      ],
     );
   }
 
@@ -340,7 +154,6 @@ class _SurahPageState extends State<SurahPage>
       spans.add(WidgetSpan(child: SizedBox(height: 110.h)));
     }
 
-    // dispose old recognizers
     for (final r in _recognizers) {
       r.dispose();
     }
@@ -358,8 +171,10 @@ class _SurahPageState extends State<SurahPage>
         style: TextStyle(
           fontFamily: font,
           fontSize: fontSize,
-          height: 2.h,
           color: Colors.black,
+          height: 2.0.h,
+          wordSpacing: 0,
+          letterSpacing: 0,
         ),
       ),
     );
@@ -389,22 +204,18 @@ class _SurahPageState extends State<SurahPage>
   void _addSurahHeader(List<InlineSpan> spans, int surah, int page) {
     spans.add(
       WidgetSpan(
-        child: Padding(
-          padding: EdgeInsets.symmetric(vertical: 12.h),
-          child: SurahHeader(suraNumber: surah),
-        ),
+        child: SurahHeader(suraNumber: surah),
       ),
     );
 
     if (page != 1 && page != 187) {
-      final special = surah == 97;
-
       spans.add(
         TextSpan(
-          text: "${special ? "齃𧻓𥳐龎" : " ﱁ  ﱂﱃﱄ"}\n",
+          text: "齃𧻓𥳐龎\n",
           style: TextStyle(
-            fontFamily: special ? "QCF_BSML" : "QCF_P001",
-            fontSize: 26.sp,
+            fontFamily: "QCF_BSML",
+            fontSize:
+                getScreenType(context) == ScreenType.large ? 13.2.sp : 18.sp,
           ),
         ),
       );

@@ -17,43 +17,53 @@ const SurahSchema = CollectionSchema(
   name: r'Surah',
   id: -5819800798527960797,
   properties: {
-    r'letters': PropertySchema(
+    r'firstPage': PropertySchema(
       id: 0,
+      name: r'firstPage',
+      type: IsarType.long,
+    ),
+    r'lastPage': PropertySchema(
+      id: 1,
+      name: r'lastPage',
+      type: IsarType.long,
+    ),
+    r'letters': PropertySchema(
+      id: 2,
       name: r'letters',
       type: IsarType.long,
     ),
     r'revelationOrder': PropertySchema(
-      id: 1,
+      id: 3,
       name: r'revelationOrder',
       type: IsarType.long,
     ),
     r'surahIndex': PropertySchema(
-      id: 2,
+      id: 4,
       name: r'surahIndex',
       type: IsarType.long,
     ),
     r'surahName': PropertySchema(
-      id: 3,
+      id: 5,
       name: r'surahName',
       type: IsarType.string,
     ),
     r'surahNameTr': PropertySchema(
-      id: 4,
+      id: 6,
       name: r'surahNameTr',
       type: IsarType.string,
     ),
     r'surahType': PropertySchema(
-      id: 5,
+      id: 7,
       name: r'surahType',
       type: IsarType.string,
     ),
     r'versesCount': PropertySchema(
-      id: 6,
+      id: 8,
       name: r'versesCount',
       type: IsarType.long,
     ),
     r'words': PropertySchema(
-      id: 7,
+      id: 9,
       name: r'words',
       type: IsarType.long,
     )
@@ -163,14 +173,16 @@ void _surahSerialize(
   List<int> offsets,
   Map<Type, List<int>> allOffsets,
 ) {
-  writer.writeLong(offsets[0], object.letters);
-  writer.writeLong(offsets[1], object.revelationOrder);
-  writer.writeLong(offsets[2], object.surahIndex);
-  writer.writeString(offsets[3], object.surahName);
-  writer.writeString(offsets[4], object.surahNameTr);
-  writer.writeString(offsets[5], object.surahType);
-  writer.writeLong(offsets[6], object.versesCount);
-  writer.writeLong(offsets[7], object.words);
+  writer.writeLong(offsets[0], object.firstPage);
+  writer.writeLong(offsets[1], object.lastPage);
+  writer.writeLong(offsets[2], object.letters);
+  writer.writeLong(offsets[3], object.revelationOrder);
+  writer.writeLong(offsets[4], object.surahIndex);
+  writer.writeString(offsets[5], object.surahName);
+  writer.writeString(offsets[6], object.surahNameTr);
+  writer.writeString(offsets[7], object.surahType);
+  writer.writeLong(offsets[8], object.versesCount);
+  writer.writeLong(offsets[9], object.words);
 }
 
 Surah _surahDeserialize(
@@ -180,15 +192,17 @@ Surah _surahDeserialize(
   Map<Type, List<int>> allOffsets,
 ) {
   final object = Surah();
+  object.firstPage = reader.readLong(offsets[0]);
   object.id = id;
-  object.letters = reader.readLong(offsets[0]);
-  object.revelationOrder = reader.readLong(offsets[1]);
-  object.surahIndex = reader.readLong(offsets[2]);
-  object.surahName = reader.readString(offsets[3]);
-  object.surahNameTr = reader.readString(offsets[4]);
-  object.surahType = reader.readString(offsets[5]);
-  object.versesCount = reader.readLong(offsets[6]);
-  object.words = reader.readLong(offsets[7]);
+  object.lastPage = reader.readLong(offsets[1]);
+  object.letters = reader.readLong(offsets[2]);
+  object.revelationOrder = reader.readLong(offsets[3]);
+  object.surahIndex = reader.readLong(offsets[4]);
+  object.surahName = reader.readString(offsets[5]);
+  object.surahNameTr = reader.readString(offsets[6]);
+  object.surahType = reader.readString(offsets[7]);
+  object.versesCount = reader.readLong(offsets[8]);
+  object.words = reader.readLong(offsets[9]);
   return object;
 }
 
@@ -206,14 +220,18 @@ P _surahDeserializeProp<P>(
     case 2:
       return (reader.readLong(offset)) as P;
     case 3:
-      return (reader.readString(offset)) as P;
+      return (reader.readLong(offset)) as P;
     case 4:
-      return (reader.readString(offset)) as P;
+      return (reader.readLong(offset)) as P;
     case 5:
       return (reader.readString(offset)) as P;
     case 6:
-      return (reader.readLong(offset)) as P;
+      return (reader.readString(offset)) as P;
     case 7:
+      return (reader.readString(offset)) as P;
+    case 8:
+      return (reader.readLong(offset)) as P;
+    case 9:
       return (reader.readLong(offset)) as P;
     default:
       throw IsarError('Unknown property with id $propertyId');
@@ -695,6 +713,59 @@ extension SurahQueryWhere on QueryBuilder<Surah, Surah, QWhereClause> {
 }
 
 extension SurahQueryFilter on QueryBuilder<Surah, Surah, QFilterCondition> {
+  QueryBuilder<Surah, Surah, QAfterFilterCondition> firstPageEqualTo(
+      int value) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'firstPage',
+        value: value,
+      ));
+    });
+  }
+
+  QueryBuilder<Surah, Surah, QAfterFilterCondition> firstPageGreaterThan(
+    int value, {
+    bool include = false,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        include: include,
+        property: r'firstPage',
+        value: value,
+      ));
+    });
+  }
+
+  QueryBuilder<Surah, Surah, QAfterFilterCondition> firstPageLessThan(
+    int value, {
+    bool include = false,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.lessThan(
+        include: include,
+        property: r'firstPage',
+        value: value,
+      ));
+    });
+  }
+
+  QueryBuilder<Surah, Surah, QAfterFilterCondition> firstPageBetween(
+    int lower,
+    int upper, {
+    bool includeLower = true,
+    bool includeUpper = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.between(
+        property: r'firstPage',
+        lower: lower,
+        includeLower: includeLower,
+        upper: upper,
+        includeUpper: includeUpper,
+      ));
+    });
+  }
+
   QueryBuilder<Surah, Surah, QAfterFilterCondition> idEqualTo(Id value) {
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(FilterCondition.equalTo(
@@ -739,6 +810,58 @@ extension SurahQueryFilter on QueryBuilder<Surah, Surah, QFilterCondition> {
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(FilterCondition.between(
         property: r'id',
+        lower: lower,
+        includeLower: includeLower,
+        upper: upper,
+        includeUpper: includeUpper,
+      ));
+    });
+  }
+
+  QueryBuilder<Surah, Surah, QAfterFilterCondition> lastPageEqualTo(int value) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'lastPage',
+        value: value,
+      ));
+    });
+  }
+
+  QueryBuilder<Surah, Surah, QAfterFilterCondition> lastPageGreaterThan(
+    int value, {
+    bool include = false,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        include: include,
+        property: r'lastPage',
+        value: value,
+      ));
+    });
+  }
+
+  QueryBuilder<Surah, Surah, QAfterFilterCondition> lastPageLessThan(
+    int value, {
+    bool include = false,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.lessThan(
+        include: include,
+        property: r'lastPage',
+        value: value,
+      ));
+    });
+  }
+
+  QueryBuilder<Surah, Surah, QAfterFilterCondition> lastPageBetween(
+    int lower,
+    int upper, {
+    bool includeLower = true,
+    bool includeUpper = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.between(
+        property: r'lastPage',
         lower: lower,
         includeLower: includeLower,
         upper: upper,
@@ -1462,6 +1585,30 @@ extension SurahQueryLinks on QueryBuilder<Surah, Surah, QFilterCondition> {
 }
 
 extension SurahQuerySortBy on QueryBuilder<Surah, Surah, QSortBy> {
+  QueryBuilder<Surah, Surah, QAfterSortBy> sortByFirstPage() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'firstPage', Sort.asc);
+    });
+  }
+
+  QueryBuilder<Surah, Surah, QAfterSortBy> sortByFirstPageDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'firstPage', Sort.desc);
+    });
+  }
+
+  QueryBuilder<Surah, Surah, QAfterSortBy> sortByLastPage() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'lastPage', Sort.asc);
+    });
+  }
+
+  QueryBuilder<Surah, Surah, QAfterSortBy> sortByLastPageDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'lastPage', Sort.desc);
+    });
+  }
+
   QueryBuilder<Surah, Surah, QAfterSortBy> sortByLetters() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'letters', Sort.asc);
@@ -1560,6 +1707,18 @@ extension SurahQuerySortBy on QueryBuilder<Surah, Surah, QSortBy> {
 }
 
 extension SurahQuerySortThenBy on QueryBuilder<Surah, Surah, QSortThenBy> {
+  QueryBuilder<Surah, Surah, QAfterSortBy> thenByFirstPage() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'firstPage', Sort.asc);
+    });
+  }
+
+  QueryBuilder<Surah, Surah, QAfterSortBy> thenByFirstPageDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'firstPage', Sort.desc);
+    });
+  }
+
   QueryBuilder<Surah, Surah, QAfterSortBy> thenById() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'id', Sort.asc);
@@ -1569,6 +1728,18 @@ extension SurahQuerySortThenBy on QueryBuilder<Surah, Surah, QSortThenBy> {
   QueryBuilder<Surah, Surah, QAfterSortBy> thenByIdDesc() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'id', Sort.desc);
+    });
+  }
+
+  QueryBuilder<Surah, Surah, QAfterSortBy> thenByLastPage() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'lastPage', Sort.asc);
+    });
+  }
+
+  QueryBuilder<Surah, Surah, QAfterSortBy> thenByLastPageDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'lastPage', Sort.desc);
     });
   }
 
@@ -1670,6 +1841,18 @@ extension SurahQuerySortThenBy on QueryBuilder<Surah, Surah, QSortThenBy> {
 }
 
 extension SurahQueryWhereDistinct on QueryBuilder<Surah, Surah, QDistinct> {
+  QueryBuilder<Surah, Surah, QDistinct> distinctByFirstPage() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addDistinctBy(r'firstPage');
+    });
+  }
+
+  QueryBuilder<Surah, Surah, QDistinct> distinctByLastPage() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addDistinctBy(r'lastPage');
+    });
+  }
+
   QueryBuilder<Surah, Surah, QDistinct> distinctByLetters() {
     return QueryBuilder.apply(this, (query) {
       return query.addDistinctBy(r'letters');
@@ -1726,6 +1909,18 @@ extension SurahQueryProperty on QueryBuilder<Surah, Surah, QQueryProperty> {
   QueryBuilder<Surah, int, QQueryOperations> idProperty() {
     return QueryBuilder.apply(this, (query) {
       return query.addPropertyName(r'id');
+    });
+  }
+
+  QueryBuilder<Surah, int, QQueryOperations> firstPageProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addPropertyName(r'firstPage');
+    });
+  }
+
+  QueryBuilder<Surah, int, QQueryOperations> lastPageProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addPropertyName(r'lastPage');
     });
   }
 

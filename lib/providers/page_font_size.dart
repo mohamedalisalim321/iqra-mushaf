@@ -54,7 +54,7 @@ const Map<Set<int>, double> _specialFontSizes = {
   {70}: 23.5,
   {51, 501}: 23.7,
   {581, 575}: 23.0, // same as 23
-  {576, 567, 577, 371, 446, 447}: 22.8,
+  {51, 576, 567, 577, 371, 446, 447}: 22.8,
 };
 
 /// Optional: single-entry overrides for clarity
