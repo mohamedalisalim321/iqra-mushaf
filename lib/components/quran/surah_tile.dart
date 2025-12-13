@@ -47,7 +47,10 @@ class SurahTile extends StatelessWidget {
                     surahNum,
                     style: TextStyle(
                       fontSize: 22.sp,
+<<<<<<< HEAD
                       fontWeight: FontWeight.w700,
+=======
+>>>>>>> 21bed5c1ab6ee90d7b146acf907b11caaf65ae64
                       color: Colors.white,
                     ),
                   ),
@@ -63,13 +66,17 @@ class SurahTile extends StatelessWidget {
                           fontFamily: "SurahName",
                           fontSize: 22.sp,
                           color: Colors.white,
+<<<<<<< HEAD
                           height: 1.1,
+=======
+>>>>>>> 21bed5c1ab6ee90d7b146acf907b11caaf65ae64
                         ),
                         overflow: TextOverflow.ellipsis,
                       ),
                       SizedBox(height: 4.h),
                       Row(
                         children: [
+<<<<<<< HEAD
                           Expanded(
                             child: Text(
                               "عدد الآيات: $ayahCount",
@@ -80,7 +87,17 @@ class SurahTile extends StatelessWidget {
                               ),
                               overflow: TextOverflow.fade,
                               maxLines: 1,
+=======
+                          Text(
+                            "الآيات $ayahCount - ",
+                            style: TextStyle(
+                              fontFamily: "Lateef",
+                              fontSize: 16.sp,
+                              color: Colors.white,
+>>>>>>> 21bed5c1ab6ee90d7b146acf907b11caaf65ae64
                             ),
+                            overflow: TextOverflow.fade,
+                            maxLines: 1,
                           ),
                           Icon(
                             isMakki
@@ -101,7 +118,10 @@ class SurahTile extends StatelessWidget {
                   style: TextStyle(
                     fontFamily: "Raleway",
                     fontSize: 11.sp,
+<<<<<<< HEAD
                     fontWeight: FontWeight.w500,
+=======
+>>>>>>> 21bed5c1ab6ee90d7b146acf907b11caaf65ae64
                     color: Colors.white,
                   ),
                 ),

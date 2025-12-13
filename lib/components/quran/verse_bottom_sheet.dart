@@ -20,17 +20,25 @@ class VerseBottomSheetState extends State<VerseBottomSheet>
     with SingleTickerProviderStateMixin {
   late final TabController _tabController;
   late final List<String> _characters;
+<<<<<<< HEAD
 
   List<VerseData>? _cachedVerseData;
   bool _loadingData = true;
+=======
+  late final ScrollController _scrollController;
+
+  List<VerseData>? _cachedVerseData;
+  bool _loadingData = true;
+
+>>>>>>> 21bed5c1ab6ee90d7b146acf907b11caaf65ae64
   int _selectedCharIndex = 0;
-  bool _isLoading = false;
 
   @override
   void initState() {
     super.initState();
 
     _tabController = TabController(length: 3, vsync: this);
+    _scrollController = ScrollController();
     _characters = _parseCharacters();
 
     _loadAndCacheVerseData();
@@ -39,12 +47,16 @@ class VerseBottomSheetState extends State<VerseBottomSheet>
   @override
   void dispose() {
     _tabController.dispose();
+    _scrollController.dispose();
     super.dispose();
   }
 
+<<<<<<< HEAD
   // --------------------------
   // Load & Cache Verse Data
   // --------------------------
+=======
+>>>>>>> 21bed5c1ab6ee90d7b146acf907b11caaf65ae64
   Future<void> _loadAndCacheVerseData() async {
     setState(() => _loadingData = true);
 
@@ -61,9 +73,12 @@ class VerseBottomSheetState extends State<VerseBottomSheet>
     });
   }
 
+<<<<<<< HEAD
   // --------------------------
   // Parse Characters
   // --------------------------
+=======
+>>>>>>> 21bed5c1ab6ee90d7b146acf907b11caaf65ae64
   List<String> _parseCharacters() {
     final text =
         "${widget.verse.verseText} ${widget.verse.verseNumber.toArabicDigits()}";
@@ -71,15 +86,16 @@ class VerseBottomSheetState extends State<VerseBottomSheet>
   }
 
   void _onCharacterSelected(int index) {
+<<<<<<< HEAD
     if (index < 0 || index >= _characters.length) return;
+=======
+    if (index < 0 ||
+        index >= _characters.length - 1 ||
+        index == _selectedCharIndex) return;
+>>>>>>> 21bed5c1ab6ee90d7b146acf907b11caaf65ae64
 
     setState(() {
       _selectedCharIndex = index;
-      _isLoading = true;
-    });
-
-    Future.delayed(const Duration(milliseconds: 120), () {
-      if (mounted) setState(() => _isLoading = false);
     });
   }
 
@@ -99,18 +115,22 @@ class VerseBottomSheetState extends State<VerseBottomSheet>
         expand: false,
         builder: (_, controller) => Column(
           children: [
-            _buildHandle(),
-            _buildCharacterSelector(),
-            Expanded(child: _buildWordDataSection()),
+            _buildHandle(scheme),
+            _buildCharacterSelector(scheme),
+            Expanded(child: _buildWordDataSection(scheme)),
           ],
         ),
       ),
     );
   }
 
+<<<<<<< HEAD
   Widget _buildHandle() {
     final scheme = Theme.of(context).colorScheme;
 
+=======
+  Widget _buildHandle(ColorScheme scheme) {
+>>>>>>> 21bed5c1ab6ee90d7b146acf907b11caaf65ae64
     return Padding(
       padding: EdgeInsets.only(top: 12.h, bottom: 8.h),
       child: Container(
@@ -124,20 +144,39 @@ class VerseBottomSheetState extends State<VerseBottomSheet>
     );
   }
 
+<<<<<<< HEAD
   Widget _buildCharacterSelector() {
     return SizedBox(
       height: 90.h,
+=======
+  Widget _buildCharacterSelector(ColorScheme scheme) {
+    return Container(
+      height: 90.h,
+      decoration: const BoxDecoration(
+        color: Colors.white,
+      ),
+      padding: EdgeInsets.symmetric(horizontal: 6.h),
+>>>>>>> 21bed5c1ab6ee90d7b146acf907b11caaf65ae64
       child: ListView.builder(
+        controller: _scrollController,
         scrollDirection: Axis.horizontal,
         itemCount: _characters.length,
+        itemExtent: null,
+        cacheExtent: 500,
         itemBuilder: (_, i) {
-          final selected = _selectedCharIndex == i;
-          return _buildCharacterItem(_characters[i], i, selected);
+          return _CharacterItem(
+            character: _characters[i],
+            index: i,
+            isSelected: _selectedCharIndex == i,
+            onTap: _onCharacterSelected,
+            scheme: scheme,
+          );
         },
       ),
     );
   }
 
+<<<<<<< HEAD
   Widget _buildCharacterItem(String char, int index, bool selected) {
     final scheme = Theme.of(context).colorScheme;
 
@@ -158,6 +197,12 @@ class VerseBottomSheetState extends State<VerseBottomSheet>
   }
 
   Widget _buildWordDataSection() {
+=======
+  //--------------------------------------
+  // WORD DATA SECTION
+  //--------------------------------------
+  Widget _buildWordDataSection(ColorScheme scheme) {
+>>>>>>> 21bed5c1ab6ee90d7b146acf907b11caaf65ae64
     if (_loadingData) {
       return const Center(child: CircularProgressIndicator());
     }
@@ -173,6 +218,7 @@ class VerseBottomSheetState extends State<VerseBottomSheet>
             ),
           ),
           child: TabBar(
+            indicatorSize: TabBarIndicatorSize.tab,
             controller: _tabController,
             labelColor: Theme.of(context).colorScheme.primary,
             unselectedLabelColor:
@@ -186,18 +232,23 @@ class VerseBottomSheetState extends State<VerseBottomSheet>
             ],
           ),
         ),
-        Expanded(
-          child: _isLoading
-              ? const Center(child: CircularProgressIndicator())
-              : _buildWordData(),
-        ),
+        Expanded(child: _buildWordData(scheme)),
       ],
     );
   }
 
+<<<<<<< HEAD
   Widget _buildWordData() {
     if (_cachedVerseData == null || _cachedVerseData!.isEmpty) {
       return _buildErrorState();
+=======
+  //--------------------------------------
+  // CACHED WORD-DATA READER
+  //--------------------------------------
+  Widget _buildWordData(ColorScheme scheme) {
+    if (_cachedVerseData == null || _cachedVerseData!.isEmpty) {
+      return _buildErrorState(scheme);
+>>>>>>> 21bed5c1ab6ee90d7b146acf907b11caaf65ae64
     }
 
     final safeIndex = _selectedCharIndex.clamp(0, _cachedVerseData!.length - 1);
@@ -206,16 +257,29 @@ class VerseBottomSheetState extends State<VerseBottomSheet>
     return TabBarView(
       controller: _tabController,
       children: [
+<<<<<<< HEAD
         _buildDataCard(data.sarf),
         _buildDataCard(data.irab),
         _buildDataCard(data.wordMeaning),
+=======
+        _DataCard(text: data.sarf, scheme: scheme),
+        _DataCard(text: data.irab, scheme: scheme),
+        _DataCard(text: data.wordMeaning, scheme: scheme),
+>>>>>>> 21bed5c1ab6ee90d7b146acf907b11caaf65ae64
       ],
     );
   }
 
+<<<<<<< HEAD
   Widget _buildErrorState() {
     final scheme = Theme.of(context).colorScheme;
 
+=======
+  //--------------------------------------
+  // ERROR
+  //--------------------------------------
+  Widget _buildErrorState(ColorScheme scheme) {
+>>>>>>> 21bed5c1ab6ee90d7b146acf907b11caaf65ae64
     return Center(
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
@@ -240,10 +304,63 @@ class VerseBottomSheetState extends State<VerseBottomSheet>
       ),
     );
   }
+}
 
+<<<<<<< HEAD
   Widget _buildDataCard(String text) {
     final scheme = Theme.of(context).colorScheme;
+=======
+//--------------------------------------
+// STATELESS CHARACTER ITEM (PERFORMANCE)
+//--------------------------------------
+class _CharacterItem extends StatelessWidget {
+  final String character;
+  final int index;
+  final bool isSelected;
+  final ValueChanged<int> onTap;
+  final ColorScheme scheme;
+>>>>>>> 21bed5c1ab6ee90d7b146acf907b11caaf65ae64
 
+  const _CharacterItem({
+    required this.character,
+    required this.index,
+    required this.isSelected,
+    required this.onTap,
+    required this.scheme,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: () => onTap(index),
+      child: Center(
+        child: Text(
+          " $character ",
+          style: TextStyle(
+            fontFamily: "UthmanicHafs",
+            fontSize: 20.sp,
+            color: isSelected ? scheme.primary : scheme.onSurface,
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+//--------------------------------------
+// STATELESS DATA CARD (PERFORMANCE)
+//--------------------------------------
+class _DataCard extends StatelessWidget {
+  final String text;
+  final ColorScheme scheme;
+
+  const _DataCard({
+    required this.text,
+    required this.scheme,
+  });
+
+  @override
+  Widget build(BuildContext context) {
     return SingleChildScrollView(
       padding: const EdgeInsets.all(16),
       child: Container(
@@ -259,6 +376,7 @@ class VerseBottomSheetState extends State<VerseBottomSheet>
                 offset: const Offset(0, 4)),
           ],
         ),
+<<<<<<< HEAD
         child: RichText(
           text: TextSpan(
             children: parseArabicText(text.replaceAll("،", ",")),
@@ -268,6 +386,15 @@ class VerseBottomSheetState extends State<VerseBottomSheet>
               color: scheme.onSurface,
               fontFamily: "Hafs",
             ),
+=======
+        child: Text(
+          text,
+          style: TextStyle(
+            fontSize: 17,
+            height: 2,
+            color: scheme.onSurface,
+            fontFamily: "UthmanicHafs",
+>>>>>>> 21bed5c1ab6ee90d7b146acf907b11caaf65ae64
           ),
           textAlign: TextAlign.right,
           textDirection: TextDirection.rtl,
