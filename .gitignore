@@ -45,3 +45,4 @@ app.*.map.json
 # Android profiler / heap dumps
 *.hprof
 android/*.hprof
+/assets/
