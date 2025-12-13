@@ -11,12 +11,12 @@ android {
     ndkVersion = flutter.ndkVersion
 
     compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_1_8
-        targetCompatibility = JavaVersion.VERSION_1_8
+        sourceCompatibility = JavaVersion.VERSION_17
+        targetCompatibility = JavaVersion.VERSION_17
     }
 
     kotlinOptions {
-        jvmTarget = JavaVersion.VERSION_1_8
+        jvmTarget = JavaVersion.VERSION_17
     }
 
     defaultConfig {
@@ -39,18 +39,23 @@ android {
     }
 }
 
-subprojects {
-    afterEvaluate { project ->
-        if (project.plugins.hasPlugin("com.android.library") && project.android.hasProperty("namespace") && project.android.namespace == null) {
-            project.android.namespace = project.group.toString()
-        }
+subprojects { project ->
+    project.plugins.whenPluginAdded { plugin ->
+        if (plugin.class.name.contains("com.android.build.gradle.LibraryPlugin")) {
 
-        // Specific fix for isar_flutter_libs
-        if (project.name == "isar_flutter_libs") {
-            project.android.namespace = "com.isar.flutter.libs"
+            // Default namespace for any plugin without namespace
+            if (!project.extensions.extraProperties.has("namespace")) {
+                project.extensions.extraProperties.set("namespace", project.group.toString())
+            }
+
+            // Force namespace for isar_flutter_libs
+            if (project.name == "isar_flutter_libs") {
+                project.extensions.extraProperties.set("namespace", "com.isar.flutter.libs")
+            }
         }
     }
 }
+
 
 flutter {
     source = "../.."

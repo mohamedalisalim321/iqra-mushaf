@@ -16,31 +16,54 @@ class _HomePageState extends State<HomePage> {
   Widget build(BuildContext context) {
     return Scaffold(
       body: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            FilledButton(
-              onPressed: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (_) => const SurahsPage(),
-                  ),
-                );
-              },
-              child: Text("Quran Page"),
-            ),
-            FilledButton(
-              onPressed: () async {
-                final verse = await SurahDatabase.getRandomVerse();
-                await NotificationService.instance.show(
-                  title: verse!.surahName,
-                  body: verse.verseText,
-                );
-              },
-              child: const Text("Send A Notification"),
-            ),
-          ],
+        child: Padding(
+          padding: const EdgeInsets.all(16.0),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              FilledButton(
+                onPressed: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) => const SurahsPage(),
+                    ),
+                  );
+                },
+                child: const Text(
+                  "Go to Quran Page",
+                  style: TextStyle(fontSize: 18),
+                ),
+              ),
+              const SizedBox(height: 20),
+              FilledButton(
+                onPressed: () async {
+                  try {
+                    final verse = await SurahDatabase.getRandomVerse();
+                    if (verse != null) {
+                      await NotificationService.instance.show(
+                        title: verse.surahName,
+                        body: verse.verseText,
+                      );
+                    } else {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(content: Text('No verse found.')),
+                      );
+                    }
+                  } catch (e) {
+                    // Handling any error that occurs during the async call
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(content: Text('Error fetching verse.')),
+                    );
+                  }
+                },
+                child: const Text(
+                  "Send A Notification",
+                  style: TextStyle(fontSize: 18),
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );

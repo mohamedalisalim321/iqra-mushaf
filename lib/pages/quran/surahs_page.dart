@@ -1,11 +1,11 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
-import 'package:iqra/pages/settings/settings_page.dart';
 
 import '../../components/quran/surah_tile.dart';
 import '../../database/surah_database.dart';
 import '../../models/quran/surah.dart';
+import '../settings/settings_page.dart';
 import 'surah_page.dart';
 
 class SurahsPage extends StatefulWidget {
@@ -114,9 +114,7 @@ class _SurahsPageState extends State<SurahsPage> {
               ),
             );
           },
-          icon: Icon(
-            Icons.settings_rounded,
-          ),
+          icon: Icon(Icons.settings_rounded),
         ),
       ),
       body: Column(

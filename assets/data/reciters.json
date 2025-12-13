@@ -1,0 +1,128 @@
+[
+    {
+        "identifier": "ar.abdulbasitmurattal",
+        "name": "عبد الباسط عبد الصمد المرتل",
+        "englishName": "Abdul Basit",
+        "bitrate": 192
+    },
+    {
+        "identifier": "ar.abdullahbasfar",
+        "name": "عبد الله بصفر",
+        "englishName": "Abdullah Basfar",
+        "bitrate": 192
+    },
+    {
+        "identifier": "ar.abdurrahmaansudais",
+        "name": "عبدالرحمن السديس",
+        "englishName": "Abdurrahmaan As-Sudais",
+        "bitrate": 192
+    },
+    {
+        "identifier": "ar.abdulsamad",
+        "name": "عبدالباسط عبدالصمد",
+        "englishName": "Abdul Samad",
+        "bitrate": 64
+    },
+    {
+        "identifier": "ar.shaatree",
+        "name": "أبو بكر الشاطري",
+        "englishName": "Abu Bakr Ash-Shaatree",
+        "bitrate": 128
+    },
+    {
+        "identifier": "ar.ahmedajamy",
+        "name": "أحمد بن علي العجمي",
+        "englishName": "Ahmed ibn Ali al-Ajamy",
+        "bitrate": 128
+    },
+    {
+        "identifier": "ar.alafasy",
+        "name": "مشاري العفاسي",
+        "englishName": "Alafasy",
+        "bitrate": 128
+    },
+    {
+        "identifier": "ar.hanirifai",
+        "name": "هاني الرفاعي",
+        "englishName": "Hani Rifai",
+        "bitrate": 192
+    },
+    {
+        "identifier": "ar.husary",
+        "name": "محمود خليل الحصري",
+        "englishName": "Husary",
+        "bitrate": 128
+    },
+    {
+        "identifier": "ar.husarymujawwad",
+        "name": "محمود خليل الحصري (المجود)",
+        "englishName": "Husary (Mujawwad)",
+        "bitrate": 128
+    },
+    {
+        "identifier": "ar.hudhaify",
+        "name": "علي بن عبد الرحمن الحذيفي",
+        "englishName": "Hudhaify",
+        "bitrate": 128
+    },
+    {
+        "identifier": "ar.ibrahimakhbar",
+        "name": "إبراهيم الأخضر",
+        "englishName": "Ibrahim Akhdar",
+        "bitrate": 32
+    },
+    {
+        "identifier": "ar.mahermuaiqly",
+        "name": "ماهر المعيقلي",
+        "englishName": "Maher Al Muaiqly",
+        "bitrate": 128
+    },
+    {
+        "identifier": "ar.minshawi",
+        "name": "محمد صديق المنشاوي",
+        "englishName": "Minshawi",
+        "bitrate": 128
+    },
+    {
+        "identifier": "ar.minshawimujawwad",
+        "name": "محمد صديق المنشاوي (المجود)",
+        "englishName": "Minshawy (Mujawwad)",
+        "bitrate": 64
+    },
+    {
+        "identifier": "ar.muhammadayyoub",
+        "name": "محمد أيوب",
+        "englishName": "Muhammad Ayyoub",
+        "bitrate": 128
+    },
+    {
+        "identifier": "ar.muhammadjibreel",
+        "name": "محمد جبريل",
+        "englishName": "Muhammad Jibreel",
+        "bitrate": 128
+    },
+    {
+        "identifier": "ar.saoodshuraym",
+        "name": "سعود بن ابراهيم الشريم",
+        "englishName": "Saood bin Ibraaheem Ash-Shuraym",
+        "bitrate": 64
+    },
+    {
+        "identifier": "en.walk",
+        "name": "Ibrahim Walk",
+        "englishName": "Ibrahim Walk",
+        "bitrate": 192
+    },
+    {
+        "identifier": "ar.parhizgar",
+        "name": "شهریار پرهیزگار",
+        "englishName": "Parhizgar",
+        "bitrate": 48
+    },
+    {
+        "identifier": "ar.aymanswoaid",
+        "name": "أيمن سويد",
+        "englishName": "Ayman Sowaid",
+        "bitrate": 64
+    }
+]

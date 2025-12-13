@@ -6,15 +6,23 @@ import 'package:flutter_localizations/flutter_localizations.dart';
 import 'database/app_database.dart';
 import 'pages/home_page.dart';
 
+import 'services/audio_service.dart';
 import 'themes/theme_provider.dart';
 import 'services/notification_service.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+
   try {
     await AppDatabase.initialize();
   } catch (e) {
     debugPrint("Database initialization failed: $e");
+  }
+
+  try {
+    await AudioService.init();
+  } catch (e) {
+    debugPrint("AudioService initialization failed: $e");
   }
 
   try {

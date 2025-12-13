@@ -48,7 +48,7 @@ class SurahTile extends StatelessWidget {
                     style: TextStyle(
                       fontSize: 22.sp,
                       fontWeight: FontWeight.w700,
-                      color: colors.onSurface,
+                      color: Colors.white,
                     ),
                   ),
                 ),
@@ -62,7 +62,7 @@ class SurahTile extends StatelessWidget {
                         style: TextStyle(
                           fontFamily: "SurahName",
                           fontSize: 22.sp,
-                          color: colors.onSecondary,
+                          color: Colors.white,
                           height: 1.1,
                         ),
                         overflow: TextOverflow.ellipsis,
@@ -76,7 +76,7 @@ class SurahTile extends StatelessWidget {
                               style: TextStyle(
                                 fontFamily: "Lateef",
                                 fontSize: 16.sp,
-                                color: colors.onSecondary.withOpacity(0.85),
+                                color: Colors.white,
                               ),
                               overflow: TextOverflow.fade,
                               maxLines: 1,
@@ -87,7 +87,7 @@ class SurahTile extends StatelessWidget {
                                 ? FlutterIslamicIcons.kaaba
                                 : FlutterIslamicIcons.mosque,
                             size: 18.sp,
-                            color: colors.onSecondary,
+                            color: Colors.white,
                           ),
                         ],
                       ),
@@ -102,7 +102,7 @@ class SurahTile extends StatelessWidget {
                     fontFamily: "Raleway",
                     fontSize: 11.sp,
                     fontWeight: FontWeight.w500,
-                    color: colors.onSecondary.withOpacity(0.75),
+                    color: Colors.white,
                   ),
                 ),
               ],

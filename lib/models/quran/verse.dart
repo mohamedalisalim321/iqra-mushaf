@@ -10,6 +10,8 @@ class Verse {
   late int surahNumber;
   @Index()
   late int verseNumber;
+  // @Index()
+  // late int verseIndex;
 
   @Index(caseSensitive: false)
   late String surahName;

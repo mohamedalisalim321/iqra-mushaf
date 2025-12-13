@@ -1,12 +1,15 @@
 import 'dart:async';
 import 'dart:io';
 
+import 'package:iqra/models/quran/verse_audio.dart';
 import 'package:isar/isar.dart';
 import 'package:path_provider/path_provider.dart';
 
+import '../models/quran/reciter.dart';
 import '../models/quran/surah.dart';
 import '../models/quran/verse.dart';
 import '../models/quran/verse_data.dart';
+import 'reciters_database.dart';
 import 'surah_database.dart';
 import 'verse_data_database.dart';
 
@@ -15,7 +18,7 @@ class AppDatabase {
   static bool _initializing = false;
   static bool _closed = false;
 
-  // Database accessor with error handling
+  /// Getter with safety checks
   static Isar get db {
     if (_isar == null || !_isar!.isOpen) {
       if (_closed) {
@@ -28,17 +31,16 @@ class AppDatabase {
     return _isar!;
   }
 
-  // Accessor for collections
-  static IsarCollection<Surah> get surahs => db.surahs;
-  static IsarCollection<Verse> get verses => db.verses;
-  static IsarCollection<VerseData> get verseData => db.verseDatas;
+  // ------------------------------------------------------------
+  // INITIALIZE
+  // ------------------------------------------------------------
 
-  // Initializes the database
   static Future<void> initialize() async {
     if (_isar?.isOpen == true) return;
 
+    // If already initializing → wait
     if (_initializing) {
-      await _waitForInitialization();
+      await _waitUntilInitialized();
       return;
     }
 
@@ -47,20 +49,26 @@ class AppDatabase {
     }
 
     _initializing = true;
+    print("Initializing Isar database...");
 
     try {
       final dir = await getApplicationDocumentsDirectory();
-      final dbPath = dir.path;
+      final path = dir.path;
 
-      _isar = await _openOrRecover(dbPath);
+      _isar = await _openOrRecover(path);
 
-      // Seed the database if needed
-      await Future.wait([
-        SurahDatabase.seedIfNeeded(),
-        VerseDataDatabase.seedIfNeeded(),
-      ]);
-    } catch (e) {
-      _isar?.close();
+      /// Seed databases one by one IN ORDER
+      /// So RecitersDatabase finishes → AudioService can use reciter
+      await SurahDatabase.seedIfNeeded();
+      await VerseDataDatabase.seedIfNeeded();
+      await RecitersDatabase.seedIfNeeded();
+
+      print("Isar database initialized successfully.");
+    } catch (e, st) {
+      print("❌ DATABASE INIT ERROR:");
+      print(e);
+      print(st);
+      await _isar?.close();
       _isar = null;
       rethrow;
     } finally {
@@ -68,100 +76,116 @@ class AppDatabase {
     }
   }
 
-  // Waits until the database is initialized
-  static Future<void> _waitForInitialization() async {
-    final completer = Completer<void>();
-    Timer? timer;
-    void check() {
-      if (!_initializing) {
-        timer?.cancel();
-        completer.complete();
-      } else {
-        timer = Timer(const Duration(milliseconds: 20), check);
-      }
-    }
+  // ------------------------------------------------------------
+  // WAIT HELPER
+  // ------------------------------------------------------------
 
-    check();
+  static Future<void> _waitUntilInitialized() async {
+    final completer = Completer<void>();
+
+    Future.doWhile(() async {
+      if (_initializing) {
+        await Future.delayed(const Duration(milliseconds: 15));
+        return true;
+      }
+      return false;
+    }).then((_) {
+      completer.complete();
+    });
+
     return completer.future;
   }
 
-  // Tries to open the Isar database or recovers it if an error occurs
+  // ------------------------------------------------------------
+  // OPEN OR RECOVER
+  // ------------------------------------------------------------
+
   static Future<Isar> _openOrRecover(String path) async {
     try {
       return await _openIsar(path);
-    } on IsarError catch (e) {
-      print("Isar error: $e");
     } catch (e) {
-      print("Unexpected error: $e");
-      rethrow;
+      print("⚠️ Isar open failed → attempting recovery...");
+      print(e);
     }
 
-    // If the database opening fails, attempt recovery
+    // Delete corrupted DB directory
     try {
-      final dbDir = Directory(path);
-      if (dbDir.existsSync()) {
-        await dbDir.delete(recursive: true); // Cleanup the existing DB
+      final directory = Directory(path);
+      if (directory.existsSync()) {
+        await directory.delete(recursive: true);
+        print("Old database deleted. Rebuilding...");
       }
     } catch (cleanupError) {
-      print("Error during cleanup: $cleanupError");
+      print("Cleanup error: $cleanupError");
     }
 
+    // Try again
     return await _openIsar(path);
   }
 
-  // Opens the Isar database with the provided path
+  // ------------------------------------------------------------
+  // LOW-LEVEL OPEN
+  // ------------------------------------------------------------
+
   static Future<Isar> _openIsar(String path) async {
     try {
       return await Isar.open(
         [
           SurahSchema,
           VerseSchema,
+          VerseAudioSchema,
           VerseDataSchema,
+          ReciterSchema,
         ],
         directory: path,
         inspector: false,
+        // Auto compaction to save space
         compactOnLaunch: const CompactCondition(
-          minBytes: 128 * 1024, // Set conditions to compact the DB
+          minBytes: 100 * 1024,
           minRatio: 2.0,
         ),
       );
     } catch (e) {
-      print("Failed to open Isar database: $e");
+      print("❌ Failed to open Isar: $e");
       rethrow;
     }
   }
 
-  // Clears all data from the database
+  // ------------------------------------------------------------
+  // CLEAR ALL
+  // ------------------------------------------------------------
+
   static Future<void> clearAll() async {
-    final instance = _isar;
-    if (instance == null || !instance.isOpen) return;
+    if (_isar == null || !_isar!.isOpen) return;
 
     try {
-      await instance.writeTxn(() async {
-        await instance.clear();
+      await _isar!.writeTxn(() async {
+        await _isar!.clear();
       });
       print("Database cleared successfully.");
     } catch (e) {
-      print("Error clearing the database: $e");
+      print("Error clearing database: $e");
     }
   }
 
-  // Closes the database
+  // ------------------------------------------------------------
+  // CLOSE
+  // ------------------------------------------------------------
+
   static Future<void> close() async {
-    final instance = _isar;
-    if (instance == null || !instance.isOpen) return;
+    if (_isar == null || !_isar!.isOpen) return;
 
     try {
-      await instance.close();
+      await _isar!.close();
       _isar = null;
       _closed = true;
       _initializing = false;
 
-      // Dispose of additional resources if needed
       SurahDatabase.dispose();
+
       print("Database closed successfully.");
     } catch (e) {
-      print("Error closing the database: $e");
+      print("Error closing database: $e");
     }
   }
 }

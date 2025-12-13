@@ -12,7 +12,9 @@ class VerseDataDatabase {
 
   /// Seed database if empty
   static Future<void> seedIfNeeded() async {
+    // 77429
     final count = await _isar.verseDatas.count();
+
     if (count > 0) return;
 
     try {
@@ -37,7 +39,7 @@ class VerseDataDatabase {
 
   /// Get a single word's VerseData by surah, verse, word
   static Future<VerseData?> getVerseData(
-      int surahNumber, int verseNumber, int wordNumber) async {
+      int surahNumber, int verseNumber, int wordNumber,) async {
     try {
       return await _isar.verseDatas
           .filter()
@@ -65,10 +67,6 @@ class VerseDataDatabase {
         .findAll();
   }
 }
-
-/// ===========================================================
-/// JSON parsing in background isolate
-/// ===========================================================
 List<VerseData> _parseVerseDataJson(String jsonStr) {
   final List<dynamic> data = jsonDecode(jsonStr);
 

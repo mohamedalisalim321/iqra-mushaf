@@ -52,13 +52,17 @@ class SurahDatabase {
         if (versesList == null) continue;
 
         final surahVerses = <Verse>[];
-        for (final v in versesList) {
+        for (final entry in versesList.asMap().entries) {
+          // final i = entry.key;
+          final v = entry.value;
+
           if (v is! Map<String, dynamic>) continue;
 
           final verse = Verse()
             ..surahName = surah.surahName
             ..surahNumber = v['surah_number'] as int? ?? 0
             ..verseNumber = v['verse_number'] as int? ?? 0
+            // ..verseIndex = i + 1
             ..qcfData = v['qcfData'] as String? ?? ''
             ..qcfV4Data = v['qcfv4data'] as String? ?? ''
             ..verseText = v['content'] as String? ?? ''
