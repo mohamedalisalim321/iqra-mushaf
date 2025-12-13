@@ -22,7 +22,7 @@ void main() async {
   try {
     await AudioService.init();
   } catch (e) {
-    debugPrint("AudioService initialization failed: $e");
+    print("AudioService initialization failed: $e");
   }
 
   try {

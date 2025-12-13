@@ -27,7 +27,6 @@ class AudioService {
   final ValueNotifier<bool> playing = ValueNotifier(false);
 
   final ValueNotifier<bool> repeatVerse = ValueNotifier(false);
-  final ValueNotifier<double> playbackSpeed = ValueNotifier(1.0);
 
   bool autoPlayNext = true;
 
@@ -136,7 +135,6 @@ class AudioService {
       audio ??= await downloadVerse(verse);
 
       await _player.setFilePath(audio.filePath);
-      await _player.setSpeed(playbackSpeed.value);
       await _player.play();
 
       _prefetchNext();
@@ -208,11 +206,6 @@ class AudioService {
 
   void toggleRepeatVerse() {
     repeatVerse.value = !repeatVerse.value;
-  }
-
-  void setPlaybackSpeed(double speed) {
-    playbackSpeed.value = speed;
-    _player.setSpeed(speed);
   }
 
   /// ────────────────────────────
