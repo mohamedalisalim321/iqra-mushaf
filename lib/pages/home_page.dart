@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:iqra/pages/settings/settings_page.dart';
 
 import '../database/surah_database.dart';
 import '../services/notification_service.dart';
@@ -15,6 +16,15 @@ class _HomePageState extends State<HomePage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      appBar: AppBar(
+        leading: IconButton(
+          onPressed: () {
+            Navigator.push(
+                context, MaterialPageRoute(builder: (_) => SettingsPage()));
+          },
+          icon: Icon(Icons.settings_rounded),
+        ),
+      ),
       body: Center(
         child: Padding(
           padding: const EdgeInsets.all(16.0),

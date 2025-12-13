@@ -16,7 +16,7 @@ void main() async {
   try {
     await AppDatabase.initialize();
   } catch (e) {
-    debugPrint("Database initialization failed: $e");
+    print("Database initialization failed: $e");
   }
 
   try {
@@ -28,7 +28,7 @@ void main() async {
   try {
     await NotificationService.instance.init();
   } catch (e) {
-    debugPrint("NotificationService initialization failed: $e");
+    print("NotificationService initialization failed: $e");
   }
 
   runApp(

@@ -21,15 +21,21 @@ class VerseBottomSheetState extends State<VerseBottomSheet>
   late final TabController _tabController;
   late final List<String> _characters;
 <<<<<<< HEAD
+<<<<<<< HEAD
 
   List<VerseData>? _cachedVerseData;
   bool _loadingData = true;
 =======
+=======
+>>>>>>> 21bed5c1ab6ee90d7b146acf907b11caaf65ae64
   late final ScrollController _scrollController;
 
   List<VerseData>? _cachedVerseData;
   bool _loadingData = true;
 
+<<<<<<< HEAD
+>>>>>>> 21bed5c1ab6ee90d7b146acf907b11caaf65ae64
+=======
 >>>>>>> 21bed5c1ab6ee90d7b146acf907b11caaf65ae64
   int _selectedCharIndex = 0;
 
@@ -52,9 +58,12 @@ class VerseBottomSheetState extends State<VerseBottomSheet>
   }
 
 <<<<<<< HEAD
+<<<<<<< HEAD
   // --------------------------
   // Load & Cache Verse Data
   // --------------------------
+=======
+>>>>>>> 21bed5c1ab6ee90d7b146acf907b11caaf65ae64
 =======
 >>>>>>> 21bed5c1ab6ee90d7b146acf907b11caaf65ae64
   Future<void> _loadAndCacheVerseData() async {
@@ -74,9 +83,12 @@ class VerseBottomSheetState extends State<VerseBottomSheet>
   }
 
 <<<<<<< HEAD
+<<<<<<< HEAD
   // --------------------------
   // Parse Characters
   // --------------------------
+=======
+>>>>>>> 21bed5c1ab6ee90d7b146acf907b11caaf65ae64
 =======
 >>>>>>> 21bed5c1ab6ee90d7b146acf907b11caaf65ae64
   List<String> _parseCharacters() {
@@ -87,7 +99,13 @@ class VerseBottomSheetState extends State<VerseBottomSheet>
 
   void _onCharacterSelected(int index) {
 <<<<<<< HEAD
+<<<<<<< HEAD
     if (index < 0 || index >= _characters.length) return;
+=======
+    if (index < 0 ||
+        index >= _characters.length - 1 ||
+        index == _selectedCharIndex) return;
+>>>>>>> 21bed5c1ab6ee90d7b146acf907b11caaf65ae64
 =======
     if (index < 0 ||
         index >= _characters.length - 1 ||
@@ -125,9 +143,13 @@ class VerseBottomSheetState extends State<VerseBottomSheet>
   }
 
 <<<<<<< HEAD
+<<<<<<< HEAD
   Widget _buildHandle() {
     final scheme = Theme.of(context).colorScheme;
 
+=======
+  Widget _buildHandle(ColorScheme scheme) {
+>>>>>>> 21bed5c1ab6ee90d7b146acf907b11caaf65ae64
 =======
   Widget _buildHandle(ColorScheme scheme) {
 >>>>>>> 21bed5c1ab6ee90d7b146acf907b11caaf65ae64
@@ -145,10 +167,13 @@ class VerseBottomSheetState extends State<VerseBottomSheet>
   }
 
 <<<<<<< HEAD
+<<<<<<< HEAD
   Widget _buildCharacterSelector() {
     return SizedBox(
       height: 90.h,
 =======
+=======
+>>>>>>> 21bed5c1ab6ee90d7b146acf907b11caaf65ae64
   Widget _buildCharacterSelector(ColorScheme scheme) {
     return Container(
       height: 90.h,
@@ -156,6 +181,9 @@ class VerseBottomSheetState extends State<VerseBottomSheet>
         color: Colors.white,
       ),
       padding: EdgeInsets.symmetric(horizontal: 6.h),
+<<<<<<< HEAD
+>>>>>>> 21bed5c1ab6ee90d7b146acf907b11caaf65ae64
+=======
 >>>>>>> 21bed5c1ab6ee90d7b146acf907b11caaf65ae64
       child: ListView.builder(
         controller: _scrollController,
@@ -176,6 +204,7 @@ class VerseBottomSheetState extends State<VerseBottomSheet>
     );
   }
 
+<<<<<<< HEAD
 <<<<<<< HEAD
   Widget _buildCharacterItem(String char, int index, bool selected) {
     final scheme = Theme.of(context).colorScheme;
@@ -198,10 +227,15 @@ class VerseBottomSheetState extends State<VerseBottomSheet>
 
   Widget _buildWordDataSection() {
 =======
+=======
+>>>>>>> 21bed5c1ab6ee90d7b146acf907b11caaf65ae64
   //--------------------------------------
   // WORD DATA SECTION
   //--------------------------------------
   Widget _buildWordDataSection(ColorScheme scheme) {
+<<<<<<< HEAD
+>>>>>>> 21bed5c1ab6ee90d7b146acf907b11caaf65ae64
+=======
 >>>>>>> 21bed5c1ab6ee90d7b146acf907b11caaf65ae64
     if (_loadingData) {
       return const Center(child: CircularProgressIndicator());
@@ -238,16 +272,22 @@ class VerseBottomSheetState extends State<VerseBottomSheet>
   }
 
 <<<<<<< HEAD
+<<<<<<< HEAD
   Widget _buildWordData() {
     if (_cachedVerseData == null || _cachedVerseData!.isEmpty) {
       return _buildErrorState();
 =======
+=======
+>>>>>>> 21bed5c1ab6ee90d7b146acf907b11caaf65ae64
   //--------------------------------------
   // CACHED WORD-DATA READER
   //--------------------------------------
   Widget _buildWordData(ColorScheme scheme) {
     if (_cachedVerseData == null || _cachedVerseData!.isEmpty) {
       return _buildErrorState(scheme);
+<<<<<<< HEAD
+>>>>>>> 21bed5c1ab6ee90d7b146acf907b11caaf65ae64
+=======
 >>>>>>> 21bed5c1ab6ee90d7b146acf907b11caaf65ae64
     }
 
@@ -258,9 +298,15 @@ class VerseBottomSheetState extends State<VerseBottomSheet>
       controller: _tabController,
       children: [
 <<<<<<< HEAD
+<<<<<<< HEAD
         _buildDataCard(data.sarf),
         _buildDataCard(data.irab),
         _buildDataCard(data.wordMeaning),
+=======
+        _DataCard(text: data.sarf, scheme: scheme),
+        _DataCard(text: data.irab, scheme: scheme),
+        _DataCard(text: data.wordMeaning, scheme: scheme),
+>>>>>>> 21bed5c1ab6ee90d7b146acf907b11caaf65ae64
 =======
         _DataCard(text: data.sarf, scheme: scheme),
         _DataCard(text: data.irab, scheme: scheme),
@@ -271,14 +317,20 @@ class VerseBottomSheetState extends State<VerseBottomSheet>
   }
 
 <<<<<<< HEAD
+<<<<<<< HEAD
   Widget _buildErrorState() {
     final scheme = Theme.of(context).colorScheme;
 
 =======
+=======
+>>>>>>> 21bed5c1ab6ee90d7b146acf907b11caaf65ae64
   //--------------------------------------
   // ERROR
   //--------------------------------------
   Widget _buildErrorState(ColorScheme scheme) {
+<<<<<<< HEAD
+>>>>>>> 21bed5c1ab6ee90d7b146acf907b11caaf65ae64
+=======
 >>>>>>> 21bed5c1ab6ee90d7b146acf907b11caaf65ae64
     return Center(
       child: Column(
@@ -307,9 +359,12 @@ class VerseBottomSheetState extends State<VerseBottomSheet>
 }
 
 <<<<<<< HEAD
+<<<<<<< HEAD
   Widget _buildDataCard(String text) {
     final scheme = Theme.of(context).colorScheme;
 =======
+=======
+>>>>>>> 21bed5c1ab6ee90d7b146acf907b11caaf65ae64
 //--------------------------------------
 // STATELESS CHARACTER ITEM (PERFORMANCE)
 //--------------------------------------
@@ -319,6 +374,9 @@ class _CharacterItem extends StatelessWidget {
   final bool isSelected;
   final ValueChanged<int> onTap;
   final ColorScheme scheme;
+<<<<<<< HEAD
+>>>>>>> 21bed5c1ab6ee90d7b146acf907b11caaf65ae64
+=======
 >>>>>>> 21bed5c1ab6ee90d7b146acf907b11caaf65ae64
 
   const _CharacterItem({
@@ -377,6 +435,7 @@ class _DataCard extends StatelessWidget {
           ],
         ),
 <<<<<<< HEAD
+<<<<<<< HEAD
         child: RichText(
           text: TextSpan(
             children: parseArabicText(text.replaceAll("،", ",")),
@@ -387,6 +446,8 @@ class _DataCard extends StatelessWidget {
               fontFamily: "Hafs",
             ),
 =======
+=======
+>>>>>>> 21bed5c1ab6ee90d7b146acf907b11caaf65ae64
         child: Text(
           text,
           style: TextStyle(
@@ -394,6 +455,9 @@ class _DataCard extends StatelessWidget {
             height: 2,
             color: scheme.onSurface,
             fontFamily: "UthmanicHafs",
+<<<<<<< HEAD
+>>>>>>> 21bed5c1ab6ee90d7b146acf907b11caaf65ae64
+=======
 >>>>>>> 21bed5c1ab6ee90d7b146acf907b11caaf65ae64
           ),
           textAlign: TextAlign.right,

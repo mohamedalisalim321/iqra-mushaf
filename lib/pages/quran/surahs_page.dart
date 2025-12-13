@@ -1,6 +1,10 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+<<<<<<< HEAD
+=======
+import 'package:iqra/components/my_searchbar.dart';
+>>>>>>> 21bed5c1ab6ee90d7b146acf907b11caaf65ae64
 
 import '../../components/quran/surah_tile.dart';
 import '../../database/surah_database.dart';
@@ -70,7 +74,7 @@ class _SurahsPageState extends State<SurahsPage> {
 
     final lower = trimmed.toLowerCase();
     final results = _allSurahs.where((s) {
-      return s.surahName.contains(trimmed) ||
+      return s.surahName.contains(lower) ||
           s.surahNameTr.toLowerCase().contains(lower);
     }).toList();
 
@@ -90,7 +94,7 @@ class _SurahsPageState extends State<SurahsPage> {
     Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (_) => SurahPage(surahIndex: firstPage),
+        builder: (_) => SurahPage(pageNumber: firstPage),
       ),
     );
   }
@@ -104,6 +108,7 @@ class _SurahsPageState extends State<SurahsPage> {
         title: const Text("القرآن الكريم"),
         centerTitle: true,
         backgroundColor: colors.secondary,
+<<<<<<< HEAD
         elevation: 3,
         leading: IconButton.filled(
           onPressed: () {
@@ -116,31 +121,23 @@ class _SurahsPageState extends State<SurahsPage> {
           },
           icon: Icon(Icons.settings_rounded),
         ),
+=======
+>>>>>>> 21bed5c1ab6ee90d7b146acf907b11caaf65ae64
       ),
       body: Column(
         children: [
           Padding(
-            padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 12.h),
+            padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 8.h),
             child: Container(
               decoration: BoxDecoration(
                 color: colors.secondary,
                 borderRadius: BorderRadius.circular(16.r),
               ),
-              child: TextField(
+              child: MySearchbar(
                 controller: _controller,
                 onChanged: _onSearchChanged,
-                textAlign: TextAlign.right,
-                style: TextStyle(color: colors.onSurface),
-                decoration: InputDecoration(
-                  prefixIcon: Icon(Icons.search, color: colors.primary),
-                  hintText: "ابحث عن سورة...",
-                  hintStyle: TextStyle(
-                    color: colors.onSurface.withOpacity(0.7),
-                  ),
-                  contentPadding:
-                      EdgeInsets.symmetric(horizontal: 14.w, vertical: 12.h),
-                  border: InputBorder.none,
-                ),
+                onClear: () {},
+                hintText: "أبحث عن سوره, رقم صفحه...",
               ),
             ),
           ),
@@ -161,21 +158,17 @@ class _SurahsPageState extends State<SurahsPage> {
                           ),
                         ),
                       )
-                    : AnimatedOpacity(
-                        opacity: 1.0,
-                        duration: const Duration(milliseconds: 250),
-                        child: ListView.separated(
-                          padding: EdgeInsets.only(top: 8.h, bottom: 20.h),
-                          itemCount: _filteredSurahs.length,
-                          separatorBuilder: (_, __) => SizedBox(height: 6.h),
-                          itemBuilder: (_, i) {
-                            final surah = _filteredSurahs[i];
-                            return SurahTile(
-                              surah: surah,
-                              onTap: () => _openSurah(surah),
-                            );
-                          },
-                        ),
+                    : ListView.builder(
+                        physics: const BouncingScrollPhysics(),
+                        padding: EdgeInsets.only(top: 8.h, bottom: 20.h),
+                        itemCount: _filteredSurahs.length,
+                        itemBuilder: (_, i) {
+                          final surah = _filteredSurahs[i];
+                          return SurahTile(
+                            surah: surah,
+                            onTap: () => _openSurah(surah),
+                          );
+                        },
                       ),
           ),
         ],

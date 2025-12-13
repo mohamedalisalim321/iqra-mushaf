@@ -48,7 +48,10 @@ class SurahTile extends StatelessWidget {
                     style: TextStyle(
                       fontSize: 22.sp,
 <<<<<<< HEAD
+<<<<<<< HEAD
                       fontWeight: FontWeight.w700,
+=======
+>>>>>>> 21bed5c1ab6ee90d7b146acf907b11caaf65ae64
 =======
 >>>>>>> 21bed5c1ab6ee90d7b146acf907b11caaf65ae64
                       color: Colors.white,
@@ -67,7 +70,10 @@ class SurahTile extends StatelessWidget {
                           fontSize: 22.sp,
                           color: Colors.white,
 <<<<<<< HEAD
+<<<<<<< HEAD
                           height: 1.1,
+=======
+>>>>>>> 21bed5c1ab6ee90d7b146acf907b11caaf65ae64
 =======
 >>>>>>> 21bed5c1ab6ee90d7b146acf907b11caaf65ae64
                         ),
@@ -76,6 +82,7 @@ class SurahTile extends StatelessWidget {
                       SizedBox(height: 4.h),
                       Row(
                         children: [
+<<<<<<< HEAD
 <<<<<<< HEAD
                           Expanded(
                             child: Text(
@@ -88,12 +95,17 @@ class SurahTile extends StatelessWidget {
                               overflow: TextOverflow.fade,
                               maxLines: 1,
 =======
+=======
+>>>>>>> 21bed5c1ab6ee90d7b146acf907b11caaf65ae64
                           Text(
                             "الآيات $ayahCount - ",
                             style: TextStyle(
                               fontFamily: "Lateef",
                               fontSize: 16.sp,
                               color: Colors.white,
+<<<<<<< HEAD
+>>>>>>> 21bed5c1ab6ee90d7b146acf907b11caaf65ae64
+=======
 >>>>>>> 21bed5c1ab6ee90d7b146acf907b11caaf65ae64
                             ),
                             overflow: TextOverflow.fade,
@@ -119,7 +131,10 @@ class SurahTile extends StatelessWidget {
                     fontFamily: "Raleway",
                     fontSize: 11.sp,
 <<<<<<< HEAD
+<<<<<<< HEAD
                     fontWeight: FontWeight.w500,
+=======
+>>>>>>> 21bed5c1ab6ee90d7b146acf907b11caaf65ae64
 =======
 >>>>>>> 21bed5c1ab6ee90d7b146acf907b11caaf65ae64
                     color: Colors.white,
