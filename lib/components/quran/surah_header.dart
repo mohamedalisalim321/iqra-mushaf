@@ -25,14 +25,16 @@ class SurahHeader extends StatelessWidget {
             image: _headerImage,
             width: imageWidth,
           ),
-          Text(
-            "$suraNumber",
-            textAlign: TextAlign.center,
-            style: TextStyle(
-              fontFamily: "arsura",
-              fontSize: fontSize,
-              color: Colors.black,
+          RichText(
+            text: TextSpan(
+              text: "$suraNumber",
+              style: TextStyle(
+                fontFamily: "arsura",
+                fontSize: fontSize,
+                color: Colors.black,
+              ),
             ),
+            textAlign: TextAlign.center,
           ),
         ],
       ),

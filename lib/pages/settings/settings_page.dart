@@ -1,15 +1,10 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-<<<<<<< HEAD
-import 'package:iqra/database/reciters_database.dart';
-import 'package:iqra/services/audio_service.dart';
 import 'package:provider/provider.dart';
 
+import '../../database/reciters_database.dart';
 import '../../models/quran/reciter.dart';
-=======
-import 'package:provider/provider.dart';
-
->>>>>>> 21bed5c1ab6ee90d7b146acf907b11caaf65ae64
+import '../../services/audio_service.dart';
 import '../../themes/theme_provider.dart';
 
 class SettingsPage extends StatefulWidget {
@@ -39,14 +34,13 @@ class _SettingsPageState extends State<SettingsPage> {
 
       // Ensure AudioService has a valid reciter
       if (audioService.currentReciter.value == null && reciters.isNotEmpty) {
-        AudioService.instance.setReciter(reciters.first);
+        AudioService.instance.setReciter(reciters[15]);
       }
     });
   }
 
   @override
   Widget build(BuildContext context) {
-<<<<<<< HEAD
     final themeProvider = Provider.of<ThemeProvider>(context);
     final scheme = Theme.of(context).colorScheme;
 
@@ -106,23 +100,7 @@ class _SettingsPageState extends State<SettingsPage> {
                         ),
                 ),
               ],
-=======
-    return Scaffold(
-      appBar: AppBar(
-        title: Text("Settings Page"),
-      ),
-      body: Center(
-        child: Row(
-          children: [
-            Text("Dark Mode"),
-            CupertinoSwitch(
-              value:
-                  Provider.of<ThemeProvider>(context, listen: false).isDarkMode,
-              onChanged: (value) =>
-                  Provider.of<ThemeProvider>(context, listen: false)
-                      .toggleTheme(),
->>>>>>> 21bed5c1ab6ee90d7b146acf907b11caaf65ae64
-            ),
+            )
           ],
         ),
       ),

@@ -107,6 +107,19 @@ class SurahDatabase {
     }
   }
 
+  static Future<List<Surah>> getAllSurahsInPage(int pageNumber) async {
+    final pageData = getPageData(pageNumber);
+
+    List<Surah> surahs = [];
+
+    for (var i in pageData) {
+      final s = await getSurah(i["surah"]);
+      surahs.add(s!);
+    }
+
+    return surahs;
+  }
+
   static Future<Verse?> getVerse(int surahNumber, int verseNumber) async {
     if (surahNumber < 1 || surahNumber > 114 || verseNumber < 1) return null;
 

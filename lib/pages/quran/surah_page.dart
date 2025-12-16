@@ -1,126 +1,109 @@
 import 'package:flutter/material.dart';
-import 'package:iqra/database/surah_database.dart';
 
-import '../../components/quran/verse_bottom_sheet.dart';
-<<<<<<< HEAD
 import '../../components/quran/surah_quran.dart';
-=======
+import '../../components/quran/verse_bottom_sheet.dart';
 import '../../database/surah_database.dart';
->>>>>>> 21bed5c1ab6ee90d7b146acf907b11caaf65ae64
 import '../../models/quran/verse.dart';
 import '../../services/audio_service.dart';
+import '../../utils/utils.dart';
 
 class SurahPage extends StatefulWidget {
-<<<<<<< HEAD
-  final int surahIndex;
+  final int pageNumber;
 
   const SurahPage({
     super.key,
-    required this.surahIndex,
+    required this.pageNumber,
   });
-=======
-  final int pageNumber;
-  const SurahPage({super.key, required this.pageNumber});
->>>>>>> 21bed5c1ab6ee90d7b146acf907b11caaf65ae64
 
   @override
   State<SurahPage> createState() => _SurahPageState();
 }
 
-<<<<<<< HEAD
 class _SurahPageState extends State<SurahPage> {
+  final AudioService audioService = AudioService.instance;
+
   late final PageController _pageController;
-  final audioService = AudioService.instance;
-=======
-class _SurahPageState extends State<SurahPage>
-    with SingleTickerProviderStateMixin {
-  final Map<int, Widget> _pageCache = {};
-  final List<LongPressGestureRecognizer> _recognizers = [];
+  late int _currentPage;
 
-  late PageController _pageController;
->>>>>>> 21bed5c1ab6ee90d7b146acf907b11caaf65ae64
+  // 🔥 Fine-grained state (NO setState rebuilds)
+  final ValueNotifier<Verse?> _selectedVerse = ValueNotifier(null);
+  final ValueNotifier<Verse?> _playingVerse = ValueNotifier(null);
+  final ValueNotifier<bool> _showAudioPlayer = ValueNotifier(false);
 
-  Verse? _selectedVerse;
-  Verse? _playingVerse;
-
-  bool showAudioPlayer = false;
-  int _currentPage = 1;
+  // ──────────────────────────────────────────────
+  // Lifecycle
+  // ──────────────────────────────────────────────
 
   @override
   void initState() {
     super.initState();
-    _init();
-  }
 
-<<<<<<< HEAD
-  void _init() {
-    _currentPage = widget.surahIndex.clamp(1, 604);
-    _pageController = PageController(initialPage: _currentPage - 1);
-
-    /// 🔊 audio playing state
-    audioService.playing.addListener(_onPlayingChanged);
-
-    /// 🎧 currently playing verse
-    audioService.currentVerse.addListener(_onVerseChanged);
-  }
-
-  void _onPlayingChanged() {
-    if (!mounted) return;
-    setState(() {
-      showAudioPlayer = audioService.playing.value;
-    });
-  }
-
-  void _onVerseChanged() {
-    if (!mounted) return;
-
-    final verse = audioService.currentVerse.value;
-    if (verse == null) return;
-
-    setState(() {
-      _playingVerse = verse;
-      _selectedVerse = verse;
-    });
-
-    int versePageNumber =
-        SurahDatabase.getPageNumber(verse.surahNumber, verse.verseNumber);
-
-    /// 🔥 auto scroll to verse page
-    if (versePageNumber != _currentPage) {
-      _pageController.animateToPage(
-        versePageNumber - 1,
-        duration: const Duration(milliseconds: 350),
-        curve: Curves.easeOut,
-      );
-    }
-=======
-  Future<void> _safeInit() async {
     _currentPage = widget.pageNumber.clamp(1, 604);
-
     _pageController = PageController(initialPage: _currentPage - 1);
 
-    if (mounted) setState(() {});
->>>>>>> 21bed5c1ab6ee90d7b146acf907b11caaf65ae64
+    audioService.playing.addListener(_onPlayingChanged);
+    audioService.currentVerse.addListener(_onVerseChanged);
   }
 
   @override
   void dispose() {
     audioService.playing.removeListener(_onPlayingChanged);
     audioService.currentVerse.removeListener(_onVerseChanged);
+
+    _selectedVerse.dispose();
+    _playingVerse.dispose();
+    _showAudioPlayer.dispose();
+
     _pageController.dispose();
     super.dispose();
   }
 
-<<<<<<< HEAD
-  void _playVerse(Verse verse) async {
-    await audioService.playVerse(verse);
+  // ──────────────────────────────────────────────
+  // Audio listeners (NO setState)
+  // ──────────────────────────────────────────────
+
+  void _onPlayingChanged() {
+    final isPlaying = audioService.playing.value;
+    if (_showAudioPlayer.value != isPlaying) {
+      _showAudioPlayer.value = isPlaying;
+    }
+  }
+
+  void _onVerseChanged() {
+    final verse = audioService.currentVerse.value;
+    if (verse == null) return;
+
+    // Prevent duplicate rebuilds
+    if (_playingVerse.value?.id == verse.id) return;
+
+    _playingVerse.value = verse;
+    _selectedVerse.value = verse;
+
+    final versePage = SurahDatabase.getPageNumber(
+      verse.surahNumber,
+      verse.verseNumber,
+    );
+
+    if (versePage != _currentPage) {
+      _pageController.animateToPage(
+        versePage - 1,
+        duration: const Duration(milliseconds: 300),
+        curve: Curves.easeOut,
+      );
+    }
+  }
+
+  // ──────────────────────────────────────────────
+  // Verse actions
+  // ──────────────────────────────────────────────
+
+  void _playVerse(Verse verse) {
+    audioService.playVerse(verse);
   }
 
   void _showVerseSheet(Verse verse) {
-=======
-  void _showVerseSheet(Verse verse, String fontFamily) {
     if (!mounted) return;
->>>>>>> 21bed5c1ab6ee90d7b146acf907b11caaf65ae64
+
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
@@ -130,562 +113,106 @@ class _SurahPageState extends State<SurahPage>
     );
   }
 
-  void _showVerseMenu(BuildContext context, Verse verse, Offset tapPos) {
+  void _showVerseMenu(
+    BuildContext context,
+    Verse verse,
+    Offset tapPosition,
+  ) {
     final overlay = Overlay.of(context).context.findRenderObject() as RenderBox;
 
     showMenu(
       context: context,
       position: RelativeRect.fromRect(
-        tapPos & const Size(40, 40),
+        tapPosition & const Size(1, 1),
         Offset.zero & overlay.size,
       ),
       items: [
         PopupMenuItem(
-          child: const Text("▶ Play verse"),
-          onTap: () => _playVerse(verse),
+          child: const Text('Play verse'),
+          onTap: () => Future.microtask(() => _playVerse(verse)),
         ),
         PopupMenuItem(
-          child: const Text("📖 Verse info"),
-          onTap: () => _showVerseSheet(verse),
+          child: const Text('Verse info'),
+          onTap: () => Future.microtask(() => _showVerseSheet(verse)),
         ),
       ],
     );
   }
+
+  void _handleVerseTap(Verse verse, Offset tapPosition) {
+    if (_selectedVerse.value?.id != verse.id) {
+      _selectedVerse.value = verse;
+    }
+
+    _showVerseMenu(context, verse, tapPosition);
+  }
+
+  // ──────────────────────────────────────────────
+  // Page handling
+  // ──────────────────────────────────────────────
+
+  void _handlePageChanged(int index) {
+    final newPage = index + 1;
+    if (_currentPage == newPage) return;
+
+    _currentPage = newPage;
+    _selectedVerse.value = null;
+  }
+
+  void _onQuranPageNumberTapped() {
+    if (!mounted) return;
+
+    showDialog(
+      context: context,
+      builder: (_) {
+        return ListView.builder(
+          itemCount: 603,
+          itemBuilder: (_, index) {
+            return ListTile(
+              title: Text((index + 1).toArabicDigits()),
+              onTap: () {
+                Navigator.pop(context);
+                _pageController.animateToPage(
+                  index,
+                  duration: const Duration(milliseconds: 300),
+                  curve: Curves.easeOut,
+                );
+              },
+            );
+          },
+        );
+      },
+    );
+  }
+
+  // ──────────────────────────────────────────────
+  // UI (Scaffold NEVER rebuilds)
+  // ──────────────────────────────────────────────
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-<<<<<<< HEAD
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-      body: SurahQuran(
-        pageController: _pageController,
-        showAudioPlayer: showAudioPlayer,
-=======
-      backgroundColor: const Color(0xFFF8F5EF),
-      appBar: _buildAppBar(),
-      body: _buildPageView(),
-    );
-  }
->>>>>>> 21bed5c1ab6ee90d7b146acf907b11caaf65ae64
-
-        /// 🔥 highlighted verse
-        selectedVerse: _selectedVerse,
-        playingVerse: _playingVerse,
-
-<<<<<<< HEAD
-        onVerseTap: (verse, tapPosition) {
-          setState(() => _selectedVerse = verse);
-          _showVerseMenu(context, verse, tapPosition);
-        },
-
-        onPageChanged: (page) {
-          setState(() {
-            _currentPage = page + 1;
-            _selectedVerse = null;
-          });
-        },
-      ),
-    );
-  }
-=======
-  Widget _buildPageView() {
-    return Column(
-      children: [
-        Expanded(
-          child: PageView.builder(
-            controller: _pageController,
-            reverse: false,
-            itemCount: 604,
-            onPageChanged: _onPageChanged,
-            itemBuilder: (_, i) => FutureBuilder<Widget>(
-              future: _buildPage(i + 1),
-              builder: (_, s) {
-                if (s.connectionState == ConnectionState.waiting) {
-                  return const Center(child: CircularProgressIndicator());
-                }
-                if (s.hasError) return _buildErrorPage(i + 1);
-                return s.data ?? const SizedBox();
+      body: SafeArea(
+        child: ValueListenableBuilder<Verse?>(
+          valueListenable: _selectedVerse,
+          builder: (_, selectedVerse, __) {
+            return ValueListenableBuilder<Verse?>(
+              valueListenable: _playingVerse,
+              builder: (_, playingVerse, __) {
+                return SurahQuran(
+                  pageController: _pageController,
+                  selectedVerse: selectedVerse,
+                  playingVerse: playingVerse,
+                  onVerseTap: _handleVerseTap,
+                  onPageChanged: _handlePageChanged,
+                  onQuranPageNumber: _onQuranPageNumberTapped,
+                );
               },
-            ),
-          ),
-        ),
-        Text(_currentPage.toString()),
-      ],
-    );
-  }
-
-  Widget _buildErrorPage(int page) {
-    return Column(
-      mainAxisAlignment: MainAxisAlignment.center,
-      children: [
-        Icon(Icons.error, size: 70, color: Colors.red[400]),
-        const SizedBox(height: 10),
-        Text(
-          "تعذّر تحميل الصفحة $page",
-          style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
-        ),
-        TextButton.icon(
-          onPressed: () => setState(() => _pageCache.remove(page)),
-          icon: const Icon(Icons.refresh),
-          label: const Text("إعادة المحاولة"),
-        ),
-      ],
-    );
-  }
-
-  void _onPageChanged(int page) {
-    setState(() {
-      _currentPage = page + 1;
-      _selectedVerse = null;
-    });
-  }
-
-  Future<Widget> _buildPage(int page) async {
-    final ranges = SurahDatabase.getPageData(page);
-    final font = "QCF_P${page.toString().padLeft(3, '0')}";
-    final fontSize = getFontSize(page, context).sp;
-
-    final spans = <InlineSpan>[];
-
-    if (page <= 2) {
-      spans.add(WidgetSpan(child: SizedBox(height: 110.h)));
-    }
-
-    for (final r in _recognizers) {
-      r.dispose();
-    }
-    _recognizers.clear();
-
-    for (final r in ranges) {
-      await _addRange(spans, r, page, font);
-    }
-
-    final widget = RichText(
-      textDirection: TextDirection.rtl,
-      textAlign: TextAlign.center,
-      text: TextSpan(
-        children: spans,
-        style: TextStyle(
-          fontFamily: font,
-          fontSize: fontSize,
-          color: Colors.black,
-          height: 2.0.h,
-          wordSpacing: 0,
-          letterSpacing: 0,
-        ),
-      ),
-    );
-
-    return widget;
-  }
-
-  Future<void> _addRange(
-    List<InlineSpan> spans,
-    Map<String, int> range,
-    int page,
-    String font,
-  ) async {
-    final surah = range["surah"]!;
-    final start = range["start"]!;
-    final end = range["end"]!;
-
-    for (int v = start; v <= end; v++) {
-      if (v == 1 && v == start) {
-        _addSurahHeader(spans, surah, page);
-      }
-
-      await _addVerse(spans, surah, v, font, isFirst: v == start);
-    }
-  }
-
-  void _addSurahHeader(List<InlineSpan> spans, int surah, int page) {
-    spans.add(
-      WidgetSpan(
-        child: SurahHeader(suraNumber: surah),
-      ),
-    );
-
-    if (page != 1 && page != 187) {
-      spans.add(
-        TextSpan(
-          text: "齃𧻓𥳐龎\n",
-          style: TextStyle(
-            fontFamily: "QCF_BSML",
-            fontSize:
-                getScreenType(context) == ScreenType.large ? 13.2.sp : 18.sp,
-          ),
-        ),
-      );
-    }
-  }
-
-  Future<void> _addVerse(
-    List<InlineSpan> spans,
-    int surah,
-    int verse,
-    String font, {
-    required bool isFirst,
-  }) async {
-    final v = await SurahDatabase.getVerseQcf(surah, verse);
-
-    final txt =
-        isFirst ? "${v.qcfData[0]}\u200A${v.qcfData.substring(1)}" : v.qcfData;
-
-    final recognizer = LongPressGestureRecognizer()
-      ..onLongPress = () {
-        if (!mounted) return;
-        setState(() => _selectedVerse = v);
-        _showVerseSheet(v, font);
-      };
-
-    _recognizers.add(recognizer);
-
-    final isSelected = _selectedVerse != null &&
-        _selectedVerse!.surahNumber == v.surahNumber &&
-        _selectedVerse!.verseNumber == v.verseNumber;
-
-    spans.add(
-      TextSpan(
-        text: txt,
-        recognizer: recognizer,
-        style: TextStyle(
-          backgroundColor: isSelected
-              ? Theme.of(context).colorScheme.secondary
-              : Colors.transparent,
-          color: Colors.black,
+            );
+          },
         ),
       ),
     );
   }
->>>>>>> 21bed5c1ab6ee90d7b146acf907b11caaf65ae64
 }
-
-
-
-// import 'package:flutter/gestures.dart';
-// import 'package:flutter/material.dart';
-
-// import '../../components/quran/verse_bottom_sheet.dart';
-// import '../../components/quran/surah_quran.dart';
-// import '../../models/quran/verse.dart';
-// import '../../services/audio_service.dart';
-
-// class SurahPage extends StatefulWidget {
-//   final int surahIndex;
-//   const SurahPage({super.key, required this.surahIndex});
-
-//   @override
-//   State<SurahPage> createState() => _SurahPageState();
-// }
-
-// class _SurahPageState extends State<SurahPage>
-//     with SingleTickerProviderStateMixin {
-//   final List<LongPressGestureRecognizer> _recognizers = [];
-
-//   late PageController _pageController;
-
-//   bool showAudioPlayer = false;
-
-//   Verse? _selectedVerse;
-//   int _currentPage = 1;
-
-//   final audioService = AudioService.instance;
-
-//   @override
-//   void initState() {
-//     super.initState();
-//     _safeInit();
-//   }
-
-//   Future<void> _safeInit() async {
-//     _currentPage = widget.surahIndex.clamp(1, 604);
-
-//     _pageController = PageController(initialPage: _currentPage - 1);
-
-//     audioService.playing.addListener(() {
-//       if (mounted) {
-//         setState(() {
-//           showAudioPlayer = audioService.playing.value;
-//         });
-//       }
-//     });
-//   }
-
-//   @override
-//   void dispose() {
-//     for (final r in _recognizers) {
-//       r.dispose();
-//     }
-//     _recognizers.clear();
-
-//     _pageController.dispose();
-//     super.dispose();
-//   }
-
-//   void _showVerseSheet(Verse verse) {
-//     if (!mounted) return;
-//     showModalBottomSheet(
-//       context: context,
-//       isScrollControlled: true,
-//       backgroundColor: Colors.black.withOpacity(0.2),
-//       barrierColor: Colors.black54,
-//       builder: (_) => VerseBottomSheet(
-//         verse: verse,
-//       ),
-//     );
-//   }
-
-//   void playVerse(Verse verse) async {
-//     await audioService.playVerse(verse);
-
-//     if (!mounted) return;
-//     setState(() {
-//       showAudioPlayer = true;
-//     });
-//   }
-
-//   @override
-//   Widget build(BuildContext context) {
-//     return Scaffold(
-//       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-//       // body: _buildPageView(),
-//       body: SurahQuran(
-//         pageController: _pageController,
-//         showAudioPlayer: showAudioPlayer,
-//         selectedVerse: _selectedVerse,
-//         onVerseTap: (verse) => showMenu(
-//           context: context,
-//           position: RelativeRect.fill,
-//           items: [
-//             PopupMenuItem(
-//               child: const Text("audio"),
-//               onTap: () {
-//                 playVerse(verse);
-//               },
-//             ),
-//             PopupMenuItem(
-//               child: const Text("verse info"),
-//               onTap: () {
-//                 _showVerseSheet(verse);
-//               },
-//             ),
-//           ],
-//         ),
-//         onPageChanged: (page) {
-//           setState(() {
-//             _currentPage = page + 1;
-//             _selectedVerse = null;
-//           });
-//         },
-//       ),
-//     );
-//   }
-// }
-
-  // PreferredSizeWidget _buildAppBar() {
-  //   return AppBar(
-  //     backgroundColor: Colors.white,
-  //     title: Text(
-  //       "صفحة $_currentPage",
-  //       style: const TextStyle(
-  //         fontSize: 20,
-  //       ),
-  //     ),
-  //     centerTitle: true,
-  //   );
-  // }
-
-  // Widget _buildPageView() {
-  //   return Stack(
-  //     children: [
-  //       if (showAudioPlayer)
-  //         const Align(
-  //           alignment: Alignment.bottomCenter,
-  //           child: Padding(
-  //             padding: EdgeInsets.all(12),
-  //             child: MyAudioPlayer(),
-  //           ),
-  //         ),
-  //       PageView.builder(
-  //         controller: _pageController,
-  //         reverse: false,
-  //         itemCount: 604,
-  //         onPageChanged: _onPageChanged,
-  //         itemBuilder: (_, i) => FutureBuilder<Widget>(
-  //           future: _buildPage(i + 1),
-  //           builder: (_, s) {
-  //             if (s.connectionState == ConnectionState.waiting) {
-  //               return const Center(child: CircularProgressIndicator());
-  //             }
-  //             if (s.hasError) return _buildErrorPage(i + 1);
-  //             return s.data ?? const SizedBox();
-  //           },
-  //         ),
-  //       ),
-  //     ],
-  //   );
-  // }
-
-  // Widget _buildErrorPage(int page) {
-  //   return Column(
-  //     mainAxisAlignment: MainAxisAlignment.center,
-  //     children: [
-  //       Icon(Icons.error, size: 70, color: Colors.red[400]),
-  //       const SizedBox(height: 10),
-  //       Text(
-  //         "تعذّر تحميل الصفحة $page",
-  //         style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
-  //       ),
-  //       TextButton.icon(
-  //         onPressed: () => setState(() => _pageCache.remove(page)),
-  //         icon: const Icon(Icons.refresh),
-  //         label: const Text("إعادة المحاولة"),
-  //       ),
-  //     ],
-  //   );
-  // }
-
-  // void _onPageChanged(int page) {
-  //   setState(() {
-  //     _currentPage = page + 1;
-  //     _selectedVerse = null;
-  //   });
-  // }
-
-  // Future<Widget> _buildPage(int page) async {
-  //   final ranges = SurahDatabase.getPageData(page);
-  //   final font = "QCF_P${page.toString().padLeft(3, '0')}";
-  //   final fontSize = getFontSize(page, context).sp;
-
-  //   final spans = <InlineSpan>[];
-
-  //   if (page <= 2) {
-  //     spans.add(WidgetSpan(child: SizedBox(height: 110.h)));
-  //   }
-
-  //   // dispose old recognizers
-  //   for (final r in _recognizers) {
-  //     r.dispose();
-  //   }
-  //   _recognizers.clear();
-
-  //   for (final r in ranges) {
-  //     await _addRange(spans, r, page, font);
-  //   }
-
-  //   final widget = RichText(
-  //     textDirection: TextDirection.rtl,
-  //     textAlign: TextAlign.center,
-  //     text: TextSpan(
-  //       children: spans,
-  //       style: TextStyle(
-  //         fontFamily: font,
-  //         fontSize: fontSize,
-  //         height: 2.h,
-  //         color: Colors.black,
-  //       ),
-  //     ),
-  //   );
-
-  //   return widget;
-  // }
-
-  // Future<void> _addRange(
-  //   List<InlineSpan> spans,
-  //   Map<String, int> range,
-  //   int page,
-  //   String font,
-  // ) async {
-  //   final surah = range["surah"]!;
-  //   final start = range["start"]!;
-  //   final end = range["end"]!;
-
-  //   for (int v = start; v <= end; v++) {
-  //     if (v == 1 && v == start) {
-  //       _addSurahHeader(spans, surah, page);
-  //     }
-
-  //     await _addVerse(spans, surah, v, font, isFirst: v == start);
-  //   }
-  // }
-
-  // void _addSurahHeader(List<InlineSpan> spans, int surah, int page) {
-  //   spans.add(
-  //     WidgetSpan(
-  //       child: Padding(
-  //         padding: EdgeInsets.symmetric(vertical: 12.h),
-  //         child: SurahHeader(suraNumber: surah),
-  //       ),
-  //     ),
-  //   );
-
-  //   if (page != 1 && page != 187) {
-  //     spans.add(
-  //       TextSpan(
-  //         text: "齃𧻓𥳐龎" + "\n",
-  //         style: TextStyle(
-  //           fontFamily: "QCF_BSML",
-  //           fontSize:
-  //               getScreenType(context) == ScreenType.large ? 13.2.sp : 18.sp,
-  //         ),
-  //       ),
-  //     );
-  //   }
-  // }
-
-  // Future<void> _addVerse(
-  //   List<InlineSpan> spans,
-  //   int surah,
-  //   int verse,
-  //   String font, {
-  //   required bool isFirst,
-  // }) async {
-  //   final v = await SurahDatabase.getVerseQcf(surah, verse);
-
-  //   final txt =
-  //       isFirst ? "${v.qcfData[0]}\u200A${v.qcfData.substring(1)}" : v.qcfData;
-
-  //   final recognizer = LongPressGestureRecognizer()
-  //     ..onLongPress = () {
-  //       if (!mounted) return;
-  //       setState(() => _selectedVerse = v);
-
-  //       showMenu(
-  //         context: context,
-  //         position: RelativeRect.fill,
-  //         items: [
-  //           PopupMenuItem(
-  //             child: const Text("audio"),
-  //             onTap: () {
-  //               playVerse(v);
-  //             },
-  //           ),
-  //           PopupMenuItem(
-  //             child: const Text("verse info"),
-  //             onTap: () {
-  //               _showVerseSheet(v);
-  //             },
-  //           ),
-  //         ],
-  //       );
-  //     };
-
-  //   _recognizers.add(recognizer);
-
-  //   final isSelected = _selectedVerse != null &&
-  //       _selectedVerse!.surahNumber == v.surahNumber &&
-  //       _selectedVerse!.verseNumber == v.verseNumber;
-
-  //   spans.add(
-  //     TextSpan(
-  //       text: txt,
-  //       recognizer: recognizer,
-  //       style: TextStyle(
-  //         backgroundColor: isSelected
-  //             ? Theme.of(context).colorScheme.secondary
-  //             : Colors.transparent,
-  //         color: Colors.black,
-  //       ),
-  //     ),
-  //   );
-  // }

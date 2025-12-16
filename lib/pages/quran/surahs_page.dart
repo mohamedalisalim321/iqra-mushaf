@@ -1,11 +1,9 @@
 import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
-<<<<<<< HEAD
-=======
-import 'package:iqra/components/my_searchbar.dart';
->>>>>>> 21bed5c1ab6ee90d7b146acf907b11caaf65ae64
 
+import '../../components/my_searchbar.dart';
 import '../../components/quran/surah_tile.dart';
 import '../../database/surah_database.dart';
 import '../../models/quran/surah.dart';
@@ -108,7 +106,6 @@ class _SurahsPageState extends State<SurahsPage> {
         title: const Text("القرآن الكريم"),
         centerTitle: true,
         backgroundColor: colors.secondary,
-<<<<<<< HEAD
         elevation: 3,
         leading: IconButton.filled(
           onPressed: () {
@@ -121,8 +118,6 @@ class _SurahsPageState extends State<SurahsPage> {
           },
           icon: Icon(Icons.settings_rounded),
         ),
-=======
->>>>>>> 21bed5c1ab6ee90d7b146acf907b11caaf65ae64
       ),
       body: Column(
         children: [

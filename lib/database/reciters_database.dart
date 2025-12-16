@@ -41,10 +41,8 @@ class RecitersDatabase {
       print("Reciters seeded: ${reciters.length}");
 
       /// Try to auto-select your preferred reciter.
-      final defaultReciter = await _isar.reciters
-          .filter()
-          .nameContains("محمد صديق")
-          .findFirst();
+      final defaultReciter =
+          await _isar.reciters.filter().nameContains("محمد صديق").findFirst();
 
       if (defaultReciter != null) {
         AudioService.instance.setReciter(defaultReciter);
