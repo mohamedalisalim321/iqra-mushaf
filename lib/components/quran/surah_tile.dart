@@ -12,16 +12,16 @@ class SurahTile extends StatelessWidget {
   const SurahTile({
     super.key,
     required this.surah,
-    required this.onTap,
+    this.onTap,
   });
 
   @override
   Widget build(BuildContext context) {
     final colors = Theme.of(context).colorScheme;
 
-    final surahNum = surah.surahIndex.toArabicDigits();
-    final ayahCount = surah.versesCount.toArabicDigits();
-    final isMakki = surah.surahType == "مكية";
+    final String surahNum = surah.surahIndex.toArabicDigits();
+    final String versesCount = surah.versesCount.toArabicDigits();
+    final bool isMakki = surah.surahType == "مكية";
 
     return Padding(
       padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 6.h),
@@ -32,82 +32,115 @@ class SurahTile extends StatelessWidget {
         shadowColor: Colors.black26,
         child: InkWell(
           borderRadius: BorderRadius.circular(16.r),
-          onTap: onTap,
-          splashColor: colors.primary.withOpacity(0.1),
-          highlightColor: colors.primary.withOpacity(0.05),
+          onTap: () {
+            if (onTap != null) {
+              Feedback.forTap(context);
+              onTap!();
+            }
+          },
+          splashColor: colors.primary.withOpacity(0.12),
+          highlightColor: colors.primary.withOpacity(0.06),
           child: Padding(
-            padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 10.h),
+            padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 12.h),
             child: Row(
               crossAxisAlignment: CrossAxisAlignment.center,
               children: [
-                CircleAvatar(
-                  backgroundColor: colors.surface.withOpacity(0.15),
-                  radius: 26.r,
-                  child: Text(
-                    surahNum,
-                    style: TextStyle(
-                      fontSize: 22.sp,
-                      fontWeight: FontWeight.w700,
-                      color: Colors.white,
-                    ),
-                  ),
-                ),
-                SizedBox(width: 14.w),
+                _buildSurahNumberBadge(surahNum, colors),
+                SizedBox(width: 16.w),
                 Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        "surah${surah.surahIndex.toString().padLeft(3, '0')}",
-                        style: TextStyle(
-                          fontFamily: "SurahName",
-                          fontSize: 22.sp,
-                          color: Colors.white,
-                          height: 1.1,
-                        ),
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                      SizedBox(height: 4.h),
-                      Row(
-                        children: [
-                          Text(
-                            "الآيات ${ayahCount.toArabicDigits()} - ",
-                            style: TextStyle(
-                              fontFamily: "Lateef",
-                              fontSize: 16.sp,
-                              color: Colors.white,
-                            ),
-                            overflow: TextOverflow.fade,
-                            maxLines: 1,
-                          ),
-                          Icon(
-                            isMakki
-                                ? FlutterIslamicIcons.kaaba
-                                : FlutterIslamicIcons.mosque,
-                            size: 24.sp,
-                            color: Colors.white,
-                          ),
-                        ],
-                      ),
-                    ],
+                  child: _buildSurahInfo(
+                    'surah${surah.surahIndex.toString().padLeft(3, '0')}',
+                    versesCount,
+                    isMakki,
+                    colors,
                   ),
                 ),
-                SizedBox(width: 10.w),
-                Text(
-                  surah.surahNameTr,
-                  textDirection: TextDirection.ltr,
-                  style: TextStyle(
-                    fontFamily: "Raleway",
-                    fontSize: 11.sp,
-                    fontWeight: FontWeight.w500,
-                    color: Colors.white,
-                  ),
-                ),
+                SizedBox(width: 12.w),
+                _buildTranslation(surah.surahNameTr),
               ],
             ),
           ),
         ),
       ),
+    );
+  }
+
+  Widget _buildSurahNumberBadge(String surahNum, ColorScheme colors) {
+    return CircleAvatar(
+      backgroundColor: colors.surface.withOpacity(0.15),
+      radius: 26.r,
+      child: Text(
+        surahNum,
+        style: TextStyle(
+          fontSize: 22.sp,
+          fontWeight: FontWeight.bold,
+          color: Colors.white,
+          fontFamily: "Cairo",
+        ),
+      ),
+    );
+  }
+
+  Widget _buildSurahInfo(
+    String surahNameArabic,
+    String versesCount,
+    bool isMakki,
+    ColorScheme colors,
+  ) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        Text(
+          surahNameArabic,
+          style: TextStyle(
+            fontFamily: 'SurahName',
+            fontSize: 24.sp,
+            color: Colors.white,
+          ),
+          overflow: TextOverflow.ellipsis,
+          maxLines: 1,
+          textDirection: TextDirection.rtl,
+        ),
+        SizedBox(height: 4.h),
+        Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(
+              'الآيات ( $versesCount )',
+              style: TextStyle(
+                fontFamily: 'Lateef',
+                fontSize: 16.sp,
+                color: Colors.white,
+              ),
+              overflow: TextOverflow.fade,
+              maxLines: 1,
+              textDirection: TextDirection.rtl,
+            ),
+            SizedBox(width: 6.w),
+            Icon(
+              isMakki ? FlutterIslamicIcons.kaaba : FlutterIslamicIcons.mosque,
+              size: 24.sp,
+              color: Colors.white,
+            ),
+          ],
+        ),
+      ],
+    );
+  }
+
+  Widget _buildTranslation(String translation) {
+    return Text(
+      translation,
+      textDirection: TextDirection.ltr,
+      textAlign: TextAlign.end,
+      style: TextStyle(
+        fontFamily: "Lora",
+        fontSize: 12.sp,
+        color: Colors.white,
+      ),
+      overflow: TextOverflow.ellipsis,
+      maxLines: 1,
     );
   }
 }

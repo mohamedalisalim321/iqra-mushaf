@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:iqra/utils/utils.dart';
 
 import '../services/audio_service.dart';
+import '../utils/utils.dart';
 
 class MyAudioPlayer extends StatelessWidget {
   const MyAudioPlayer({super.key});
@@ -13,253 +13,367 @@ class MyAudioPlayer extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final audioService = AudioService.instance;
-    final theme = Theme.of(context);
+    final audio = AudioService.instance;
+    return ValueListenableBuilder<bool>(
+      valueListenable: audio.showAudioPlayer,
+      builder: (_, visible, __) {
+        if (!visible) return const SizedBox.shrink();
 
-    return Material(
-      elevation: 12,
-      borderRadius: BorderRadius.circular(18),
-      color: theme.colorScheme.secondary,
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
+        return IgnorePointer(
+          ignoring: !visible,
+          child: AnimatedSlide(
+            offset: visible ? Offset.zero : const Offset(0, 1),
+            duration: const Duration(milliseconds: 200),
+            curve: Curves.easeOutCubic,
+            child: AnimatedOpacity(
+              opacity: visible ? 1 : 0,
+              duration: const Duration(milliseconds: 180),
+              child: RepaintBoundary(child: _playerBody(context, audio)),
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  Column _playerBody(BuildContext context, AudioService audio) {
+    return Column(
+      children: [
+        Row(
           children: [
-            /// ───────────── Header ─────────────
-            Row(
-              children: [
-                IconButton(
-                  iconSize: 42,
-                  color: Colors.white,
-                  icon: const Icon(Icons.close_rounded),
-                  onPressed: audioService.stop, // ✅ correct behavior
-                ),
-                const SizedBox(width: 8),
 
-                /// Reciter name
-                Expanded(
-                  child: ValueListenableBuilder(
-                    valueListenable: audioService.currentReciter,
-                    builder: (_, reciter, __) {
+            Container(
+              height: 56,
+              padding: const EdgeInsets.symmetric(horizontal: 12),
+              decoration: BoxDecoration(
+                color: Theme.of(context).colorScheme.secondary,
+                borderRadius: BorderRadius.circular(16),
+              ),
+              child: StreamBuilder<Duration>(
+                stream: audio.positionStream,
+                builder: (_, posSnap) {
+                  final position = posSnap.data ?? Duration.zero;
+
+                  return StreamBuilder<Duration?>(
+                    stream: audio.durationStream,
+                    builder: (_, durSnap) {
+                      final duration = durSnap.data ?? Duration.zero;
+
+                      final maxMs = duration.inMilliseconds;
+                      final posMs = position.inMilliseconds.clamp(0, maxMs);
+
+                      return Expanded(
+                        child: Slider(
+                          value: maxMs > 0 ? posMs.toDouble() : 0,
+                          max: maxMs > 0 ? maxMs.toDouble() : 1,
+                          activeColor: Colors.white,
+                          inactiveColor: Colors.white30,
+                          onChanged: (v) => audio.seek(
+                            Duration(milliseconds: v.toInt()),
+                          ),
+                        ),
+                      );
+                    },
+                  );
+                },
+              ),
+            ),
+
+
+            Container(
+              height: 56,
+              padding: const EdgeInsets.symmetric(horizontal: 12),
+              decoration: BoxDecoration(
+                color: Theme.of(context).colorScheme.secondary,
+                borderRadius: BorderRadius.circular(16),
+              ),
+              child: Icon(Icons.settings),
+            ),
+
+            
+
+
+          ],
+        ),
+        const SizedBox(height: 10),
+        Container(
+          // height: 72,
+          padding: const EdgeInsets.symmetric(horizontal: 12),
+          decoration: BoxDecoration(
+            color: Theme.of(context).colorScheme.secondary,
+            borderRadius: BorderRadius.circular(16),
+          ),
+          child: Column(
+            children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceAround,
+                children: [
+                  StreamBuilder(
+                    stream: audio.positionStream,
+                    builder: (_, posSnap) {
+                      final position = posSnap.data ?? Duration.zero;
                       return Text(
-                        reciter?.name ?? "No reciter selected",
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
+                        _fmt(position).toArabicDigits(),
                         style: const TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.w700,
                           color: Colors.white,
+                          fontSize: 12,
                         ),
                       );
                     },
                   ),
-                ),
-              ],
-            ),
-
-            const SizedBox(height: 8),
-
-            /// ───────────── Progress ─────────────
-            StreamBuilder<Duration>(
-              stream: audioService.positionStream,
-              builder: (_, posSnap) {
-                final position = posSnap.data ?? Duration.zero;
-
-                return StreamBuilder<Duration?>(
-                  stream: audioService.durationStream,
-                  builder: (_, durSnap) {
-                    final duration = durSnap.data ?? Duration.zero;
-
-                    final maxMs = duration.inMilliseconds;
-                    final posMs = position.inMilliseconds.clamp(0, maxMs);
-
-                    return Row(
-                      children: [
-                        Text(
-                          _fmt(position).toArabicDigits(),
-                          style: const TextStyle(
-                            color: Colors.white70,
-                            fontSize: 12,
-                          ),
+                  ValueListenableBuilder(
+                    valueListenable: audio.currentReciter,
+                    builder: (_, reciter, __) {
+                      return Text(
+                        reciter?.name ?? "—",
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontWeight: FontWeight.w700,
+                          fontSize: 15,
                         ),
-                        const SizedBox(width: 6),
-                        Expanded(
-                          child: Slider(
-                            value: maxMs > 0 ? posMs.toDouble() : 0,
-                            max: maxMs > 0 ? maxMs.toDouble() : 1,
-                            activeColor: Colors.white,
-                            inactiveColor: Colors.white30,
-                            onChanged: (v) {
-                              audioService.seek(
-                                Duration(milliseconds: v.toInt()),
-                              );
-                            },
-                          ),
+                      );
+                    },
+                  ),
+                  StreamBuilder(
+                    stream: audio.durationStream,
+                    builder: (_, durSnap) {
+                      final duration = durSnap.data ?? Duration.zero;
+                      return Text(
+                        _fmt(duration).toArabicDigits(),
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 12,
                         ),
-                        const SizedBox(width: 6),
-                        Text(
-                          _fmt(duration).toArabicDigits(),
-                          style: const TextStyle(
-                            color: Colors.white70,
-                            fontSize: 12,
-                          ),
+                      );
+                    },
+                  ),
+                ],
+              ),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  ValueListenableBuilder<bool>(
+                    valueListenable: audio.repeatVerse,
+                    builder: (_, repeat, __) {
+                      return IconButton(
+                        icon: Icon(
+                          Icons.repeat_one_rounded,
+                          color: repeat ? Colors.white : Colors.white70,
                         ),
-                      ],
-                    );
-                  },
-                );
-              },
-            ),
+                        onPressed: audio.toggleRepeatVerse,
+                      );
+                    },
+                  ),
 
-            const SizedBox(height: 8),
+                  IconButton(
+                    iconSize: 44,
+                    color: Colors.white,
+                    icon: const Icon(Icons.skip_previous_rounded),
+                    onPressed: audio.playPreviousVerse,
+                  ),
+                  const SizedBox(width: 6),
+                  ValueListenableBuilder<bool>(
+                    valueListenable: audio.playing,
+                    builder: (_, playing, __) {
+                      return IconButton(
+                        iconSize: 44,
+                        color: Colors.white,
+                        icon: Icon(
+                          playing
+                              ? Icons.pause_circle_filled_rounded
+                              : Icons.play_circle_fill_rounded,
+                        ),
+                        onPressed: playing ? audio.pause : audio.resume,
+                      );
+                    },
+                  ),
+                  const SizedBox(width: 6),
+                  IconButton(
+                    iconSize: 44,
+                    color: Colors.white,
+                    icon: const Icon(Icons.skip_next_rounded),
+                    onPressed: audio.playNextVerse,
+                  ),
 
-            /// ───────────── Controls ─────────────
-            Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                IconButton(
-                  iconSize: 56,
-                  color: Colors.white,
-                  onPressed: () => audioService.playNextVerse(),
-                  icon: Icon(Icons.arrow_circle_right_outlined),
-                ),
-                ValueListenableBuilder<bool>(
-                  valueListenable: audioService.playing,
-                  builder: (_, isPlaying, __) {
-                    return IconButton(
-                      iconSize: 56,
-                      color: Colors.white,
-                      icon: Icon(
-                        isPlaying
-                            ? Icons.pause_circle_filled_rounded
-                            : Icons.play_circle_fill_rounded,
-                      ),
-                      onPressed:
-                          isPlaying ? audioService.pause : audioService.resume,
-                    );
-                  },
-                ),
-                IconButton(
-                  iconSize: 56,
-                  color: Colors.white,
-                  onPressed: () => audioService.playPreviousVerse(),
-                  icon: Icon(Icons.arrow_circle_left_outlined),
-                ),
-              ],
-            ),
-          ],
+                  //                       /// Verse info
+                  ValueListenableBuilder(
+                    valueListenable: audio.currentVerse,
+                    builder: (_, verse, __) {
+                      if (verse == null) return const SizedBox();
+
+                      return Text(
+                        "${verse.surahName} : ${verse.verseNumber.toArabicDigits()}",
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 12,
+                        ),
+                      );
+                    },
+                  ),
+                ],
+              ),
+            ],
+          ),
         ),
-      ),
+      ],
     );
   }
 }
 
-
 // import 'package:flutter/material.dart';
-// import 'package:iqra/utils/utils.dart';
 
 // import '../services/audio_service.dart';
+// import '../utils/utils.dart';
 
-// class MyAudioPlayer extends StatefulWidget {
+// class MyAudioPlayer extends StatelessWidget {
 //   const MyAudioPlayer({super.key});
 
-//   @override
-//   State<MyAudioPlayer> createState() => _MyAudioPlayerState();
-// }
-
-// class _MyAudioPlayerState extends State<MyAudioPlayer> {
-//   final audioService = AudioService.instance;
-
-//   String _fmt(Duration d) {
+//   static String _fmt(Duration d) {
 //     String two(int n) => n.toString().padLeft(2, '0');
 //     return "${two(d.inMinutes)}:${two(d.inSeconds.remainder(60))}";
 //   }
 
 //   @override
 //   Widget build(BuildContext context) {
+//     final audio = AudioService.instance;
 //     final theme = Theme.of(context);
 
+//     return ValueListenableBuilder<bool>(
+//       valueListenable: audio.showAudioPlayer,
+//       builder: (_, visible, __) {
+//         if (!visible) return const SizedBox.shrink();
+
+//         return IgnorePointer(
+//           ignoring: !visible,
+//           child: AnimatedSlide(
+//             offset: visible ? Offset.zero : const Offset(0, 1),
+//             duration: const Duration(milliseconds: 200),
+//             curve: Curves.easeOutCubic,
+//             child: AnimatedOpacity(
+//               opacity: visible ? 1 : 0,
+//               duration: const Duration(milliseconds: 180),
+//               child: RepaintBoundary(child: playerBody(theme, audio)),
+//             ),
+//           ),
+//         );
+//       },
+//     );
+//   }
+
+//   Widget playerBody(ThemeData theme, AudioService audio) {
 //     return Material(
-//       elevation: 12,
+//       elevation: 14,
 //       borderRadius: BorderRadius.circular(18),
 //       color: theme.colorScheme.secondary,
 //       child: Padding(
-//         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+//         padding: const EdgeInsets.fromLTRB(16, 12, 16, 10),
 //         child: Column(
 //           mainAxisSize: MainAxisSize.min,
 //           children: [
+//             /// ───────── Header ─────────
 //             Row(
 //               children: [
 //                 IconButton(
-//                   iconSize: 56,
+//                   icon: const Icon(Icons.close_rounded),
+//                   iconSize: 34,
 //                   color: Colors.white,
-//                   onPressed: () => audioService.toggleShowAudioPlayer(),
-//                   icon: Icon(Icons.close_rounded),
+//                   onPressed: audio.stop,
 //                 ),
-
-//                 /// ───────────── Reciter Name ─────────────
-
-//                 ValueListenableBuilder(
-//                   valueListenable: audioService.reciter,
-//                   builder: (_, reciter, __) {
-//                     return Text(
-//                       reciter?.name ?? "No reciter selected",
-//                       maxLines: 1,
-//                       overflow: TextOverflow.ellipsis,
-//                       style: const TextStyle(
-//                         fontSize: 16,
-//                         fontWeight: FontWeight.w700,
-//                         color: Colors.white,
+//                 const SizedBox(width: 6),
+//                 Expanded(
+//                   child: Column(
+//                     crossAxisAlignment: CrossAxisAlignment.start,
+//                     children: [
+//                       /// Reciter
+//                       ValueListenableBuilder(
+//                         valueListenable: audio.currentReciter,
+//                         builder: (_, reciter, __) {
+//                           return Text(
+//                             reciter?.name ?? "—",
+//                             maxLines: 1,
+//                             overflow: TextOverflow.ellipsis,
+//                             style: const TextStyle(
+//                               color: Colors.white,
+//                               fontWeight: FontWeight.w700,
+//                               fontSize: 15,
+//                             ),
+//                           );
+//                         },
 //                       ),
+
+//                       /// Verse info
+//                       ValueListenableBuilder(
+//                         valueListenable: audio.currentVerse,
+//                         builder: (_, verse, __) {
+//                           if (verse == null) return const SizedBox();
+
+//                           return Text(
+//                             "سورة ${verse.surahName} • آية ${verse.verseNumber.toArabicDigits()}",
+//                             style: const TextStyle(
+//                               color: Colors.white,
+//                               fontSize: 12,
+//                             ),
+//                           );
+//                         },
+//                       ),
+//                     ],
+//                   ),
+//                 ),
+//                 ValueListenableBuilder<bool>(
+//                   valueListenable: audio.repeatVerse,
+//                   builder: (_, repeat, __) {
+//                     return IconButton(
+//                       icon: Icon(
+//                         Icons.repeat_one_rounded,
+//                         color: repeat ? Colors.white : Colors.white70,
+//                       ),
+//                       onPressed: audio.toggleRepeatVerse,
 //                     );
 //                   },
 //                 ),
 //               ],
 //             ),
 
-//             /// ───────────── Slider ─────────────
+//             /// ───────── Progress ─────────
 //             StreamBuilder<Duration>(
-//               stream: audioService.positionStream,
+//               stream: audio.positionStream,
 //               builder: (_, posSnap) {
 //                 final position = posSnap.data ?? Duration.zero;
 
 //                 return StreamBuilder<Duration?>(
-//                   stream: audioService.durationStream,
+//                   stream: audio.durationStream,
 //                   builder: (_, durSnap) {
 //                     final duration = durSnap.data ?? Duration.zero;
 
-//                     final max = duration.inMilliseconds.toDouble();
-//                     final value =
-//                         position.inMilliseconds.toDouble().clamp(0, max);
+//                     final maxMs = duration.inMilliseconds;
+//                     final posMs = position.inMilliseconds.clamp(0, maxMs);
 
 //                     return Row(
 //                       children: [
 //                         Text(
 //                           _fmt(position).toArabicDigits(),
 //                           style: const TextStyle(
-//                             color: Colors.white70,
+//                             color: Colors.white,
 //                             fontSize: 12,
 //                           ),
 //                         ),
-//                         SizedBox(width: 4),
 //                         Expanded(
 //                           child: Slider(
-//                             value: max > 0 ? value.toDouble() : 0,
-//                             max: max > 0 ? max : 1,
+//                             value: maxMs > 0 ? posMs.toDouble() : 0,
+//                             max: maxMs > 0 ? maxMs.toDouble() : 1,
 //                             activeColor: Colors.white,
 //                             inactiveColor: Colors.white30,
-//                             onChanged: (v) {
-//                               audioService.seek(
-//                                 Duration(milliseconds: v.toInt()),
-//                               );
-//                             },
+//                             onChanged: (v) => audio.seek(
+//                               Duration(milliseconds: v.toInt()),
+//                             ),
 //                           ),
 //                         ),
-//                         SizedBox(width: 4),
 //                         Text(
 //                           _fmt(duration).toArabicDigits(),
 //                           style: const TextStyle(
-//                             color: Colors.white70,
+//                             color: Colors.white,
 //                             fontSize: 12,
 //                           ),
 //                         ),
@@ -270,29 +384,38 @@ class MyAudioPlayer extends StatelessWidget {
 //               },
 //             ),
 
-//             /// ───────────── Controls ─────────────
+//             /// ───────── Controls ─────────
 //             Row(
 //               mainAxisAlignment: MainAxisAlignment.center,
 //               children: [
-//                 /// Play / Pause
-//                 ValueListenableBuilder(
-//                   valueListenable: audioService.playing,
-//                   builder: (_, isPlaying, __) {
+//                 IconButton(
+//                   iconSize: 44,
+//                   color: Colors.white,
+//                   icon: const Icon(Icons.skip_previous_rounded),
+//                   onPressed: audio.playPreviousVerse,
+//                 ),
+//                 const SizedBox(width: 6),
+//                 ValueListenableBuilder<bool>(
+//                   valueListenable: audio.playing,
+//                   builder: (_, playing, __) {
 //                     return IconButton(
-//                       iconSize: 56,
+//                       iconSize: 44,
 //                       color: Colors.white,
 //                       icon: Icon(
-//                         isPlaying
+//                         playing
 //                             ? Icons.pause_circle_filled_rounded
 //                             : Icons.play_circle_fill_rounded,
 //                       ),
-//                       onPressed: () {
-//                         isPlaying
-//                             ? audioService.pause()
-//                             : audioService.resume();
-//                       },
+//                       onPressed: playing ? audio.pause : audio.resume,
 //                     );
 //                   },
+//                 ),
+//                 const SizedBox(width: 6),
+//                 IconButton(
+//                   iconSize: 44,
+//                   color: Colors.white,
+//                   icon: const Icon(Icons.skip_next_rounded),
+//                   onPressed: audio.playNextVerse,
 //                 ),
 //               ],
 //             ),

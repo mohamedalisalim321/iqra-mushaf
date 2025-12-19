@@ -7,5 +7,10 @@ class PageData {
   final String font;
   final List<String> surahsNames;
 
-  PageData(this.ranges, this.verses, this.font, this.surahsNames);
+  PageData(
+    this.ranges,
+    this.verses,
+    this.font,
+    this.surahsNames,
+  );
 }

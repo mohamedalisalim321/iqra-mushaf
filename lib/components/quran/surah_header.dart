@@ -7,7 +7,9 @@ class SurahHeader extends StatelessWidget {
   final int suraNumber;
   const SurahHeader({super.key, required this.suraNumber});
 
-  static const _headerImage = AssetImage("assets/images/surah header.png");
+  static const _headerImage = AssetImage(
+    "assets/images/surah header.png",
+  );
 
   @override
   Widget build(BuildContext context) {

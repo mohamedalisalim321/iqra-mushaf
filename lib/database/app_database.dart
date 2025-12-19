@@ -1,7 +1,6 @@
 import 'dart:async';
 import 'dart:io';
 
-import 'package:iqra/models/quran/verse_audio.dart';
 import 'package:isar/isar.dart';
 import 'package:path_provider/path_provider.dart';
 
@@ -9,6 +8,7 @@ import '../models/quran/reciter.dart';
 import '../models/quran/surah.dart';
 import '../models/quran/verse.dart';
 import '../models/quran/verse_data.dart';
+import '../models/quran/verse_audio.dart';
 import 'reciters_database.dart';
 import 'surah_database.dart';
 import 'verse_data_database.dart';

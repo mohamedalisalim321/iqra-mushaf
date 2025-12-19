@@ -4,37 +4,35 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 
 import 'database/app_database.dart';
-import 'pages/home_page.dart';
+// import 'pages/home_page.dart';
+import 'pages/quran/surahs_list_page.dart';
 
+import 'providers/app_settings.dart';
 import 'services/audio_service.dart';
 import 'themes/theme_provider.dart';
-import 'services/notification_service.dart';
+//import 'services/notification_service.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
   try {
-    await AppDatabase.initialize();
+    await Future.wait([
+      AppDatabase.initialize(),
+      AudioService.init(),
+      AppSettings().init(),
+      AppSettings().resetSettings(),
+      //NotificationService.instance.init(),
+    ]);
   } catch (e) {
-    print("Database initialization failed: $e");
-  }
-
-  try {
-    await AudioService.init();
-  } catch (e) {
-    print("AudioService initialization failed: $e");
-  }
-
-  try {
-    await NotificationService.instance.init();
-  } catch (e) {
-    print("NotificationService initialization failed: $e");
+    // Centralized error handling with more context
+    print("Service initialization failed: $e");
   }
 
   runApp(
     MultiProvider(
       providers: [
         ChangeNotifierProvider(create: (context) => ThemeProvider()),
+        ChangeNotifierProvider(create: (context) => AppSettings()),
       ],
       child: const IqraApp(),
     ),
@@ -63,7 +61,7 @@ class IqraApp extends StatelessWidget {
           GlobalCupertinoLocalizations.delegate,
         ],
         debugShowCheckedModeBanner: false,
-        home: const HomePage(),
+        home: const SurahsListPage(),
         theme: Provider.of<ThemeProvider>(context).themeData,
         themeMode: ThemeMode.dark,
       ),

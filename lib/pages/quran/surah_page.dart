@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 
+import '../../components/my_audio_player.dart';
 import '../../components/quran/surah_quran.dart';
 import '../../components/quran/verse_bottom_sheet.dart';
 import '../../database/surah_database.dart';
 import '../../models/quran/verse.dart';
 import '../../services/audio_service.dart';
-import '../../utils/utils.dart';
 
 class SurahPage extends StatefulWidget {
   final int pageNumber;
@@ -20,19 +20,19 @@ class SurahPage extends StatefulWidget {
 }
 
 class _SurahPageState extends State<SurahPage> {
-  final AudioService audioService = AudioService.instance;
+  final AudioService audio = AudioService.instance;
 
   late final PageController _pageController;
   late int _currentPage;
 
-  // 🔥 Fine-grained state (NO setState rebuilds)
+  /// Fine-grained state (NO setState rebuilds)
   final ValueNotifier<Verse?> _selectedVerse = ValueNotifier(null);
   final ValueNotifier<Verse?> _playingVerse = ValueNotifier(null);
-  final ValueNotifier<bool> _showAudioPlayer = ValueNotifier(false);
+  final ValueNotifier<bool> _showAppBar = ValueNotifier(false);
 
-  // ──────────────────────────────────────────────
+  // ─────────────────────────────
   // Lifecycle
-  // ──────────────────────────────────────────────
+  // ─────────────────────────────
 
   @override
   void initState() {
@@ -41,177 +41,195 @@ class _SurahPageState extends State<SurahPage> {
     _currentPage = widget.pageNumber.clamp(1, 604);
     _pageController = PageController(initialPage: _currentPage - 1);
 
-    audioService.playing.addListener(_onPlayingChanged);
-    audioService.currentVerse.addListener(_onVerseChanged);
+    audio.currentVerse.addListener(_onVerseChanged);
   }
 
   @override
   void dispose() {
-    audioService.playing.removeListener(_onPlayingChanged);
-    audioService.currentVerse.removeListener(_onVerseChanged);
+    audio.currentVerse.removeListener(_onVerseChanged);
 
     _selectedVerse.dispose();
     _playingVerse.dispose();
-    _showAudioPlayer.dispose();
+    _showAppBar.dispose();
 
     _pageController.dispose();
     super.dispose();
   }
 
-  // ──────────────────────────────────────────────
-  // Audio listeners (NO setState)
-  // ──────────────────────────────────────────────
-
-  void _onPlayingChanged() {
-    final isPlaying = audioService.playing.value;
-    if (_showAudioPlayer.value != isPlaying) {
-      _showAudioPlayer.value = isPlaying;
-    }
-  }
+  // ─────────────────────────────
+  // Audio sync (NO rebuilds)
+  // ─────────────────────────────
 
   void _onVerseChanged() {
-    final verse = audioService.currentVerse.value;
+    final verse = audio.currentVerse.value;
     if (verse == null) return;
 
-    // Prevent duplicate rebuilds
     if (_playingVerse.value?.id == verse.id) return;
 
     _playingVerse.value = verse;
     _selectedVerse.value = verse;
 
-    final versePage = SurahDatabase.getPageNumber(
+    final page = SurahDatabase.getPageNumber(
       verse.surahNumber,
       verse.verseNumber,
-    );
+    ).clamp(1, 604);
 
-    if (versePage != _currentPage) {
+    if (page != _currentPage) {
       _pageController.animateToPage(
-        versePage - 1,
-        duration: const Duration(milliseconds: 300),
-        curve: Curves.easeOut,
+        page - 1,
+        duration: const Duration(milliseconds: 250),
+        curve: Curves.easeOutCubic,
       );
     }
   }
 
-  // ──────────────────────────────────────────────
+  // ─────────────────────────────
   // Verse actions
-  // ──────────────────────────────────────────────
-
-  void _playVerse(Verse verse) {
-    audioService.playVerse(verse);
-  }
+  // ─────────────────────────────
 
   void _showVerseSheet(Verse verse) {
+    if (_selectedVerse.value?.id != verse.id) {
+      _selectedVerse.value = verse;
+    }
+    _showAppBar.value = false;
     if (!mounted) return;
 
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
-      backgroundColor: Colors.black.withOpacity(0.25),
-      barrierColor: Colors.black54,
+      backgroundColor: Colors.black.withOpacity(.25),
       builder: (_) => VerseBottomSheet(verse: verse),
     );
   }
+  // ─────────────────────────────
+  // Page handling
+  // ─────────────────────────────
 
-  void _showVerseMenu(
-    BuildContext context,
-    Verse verse,
-    Offset tapPosition,
-  ) {
-    final overlay = Overlay.of(context).context.findRenderObject() as RenderBox;
+  void _handlePageChanged(int index) {
+    final page = index + 1;
+    if (_currentPage == page) return;
 
-    showMenu(
-      context: context,
-      position: RelativeRect.fromRect(
-        tapPosition & const Size(1, 1),
-        Offset.zero & overlay.size,
+    _currentPage = page;
+    _selectedVerse.value = null;
+    // _showAppBar.value = false;
+  }
+
+  // ─────────────────────────────
+  // UI
+  // ─────────────────────────────
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      body: SafeArea(
+        child: Stack(
+          children: [
+            // Quran content + gestures
+            GestureDetector(
+              behavior: HitTestBehavior.opaque,
+              onTap: () {
+                _showAppBar.value = !_showAppBar.value;
+              },
+              child: ValueListenableBuilder<Verse?>(
+                valueListenable: _selectedVerse,
+                builder: (_, selectedVerse, __) {
+                  return ValueListenableBuilder<Verse?>(
+                    valueListenable: _playingVerse,
+                    builder: (_, playingVerse, __) {
+                      return SurahQuran(
+                        pageController: _pageController,
+                        selectedVerse: selectedVerse,
+                        playingVerse: playingVerse,
+                        onVerseTap: _showVerseSheet,
+                        onPageChanged: _handlePageChanged,
+                      );
+                    },
+                  );
+                },
+              ),
+            ),
+
+            // 🎵 Audio player (does NOT toggle AppBar)
+            Positioned(
+              bottom: 8,
+              left: 8,
+              right: 8,
+              child: _myAudioPlayer(),
+            ),
+
+            // ⬆️ Floating AppBar
+            Positioned(
+              top: 8,
+              left: 0,
+              right: 0,
+              child: _floatingAppBar(),
+            ),
+          ],
+        ),
       ),
-      items: [
-        PopupMenuItem(
-          child: const Text('Play verse'),
-          onTap: () => Future.microtask(() => _playVerse(verse)),
-        ),
-        PopupMenuItem(
-          child: const Text('Verse info'),
-          onTap: () => Future.microtask(() => _showVerseSheet(verse)),
-        ),
-      ],
     );
   }
 
-  void _handleVerseTap(Verse verse, Offset tapPosition) {
-    if (_selectedVerse.value?.id != verse.id) {
-      _selectedVerse.value = verse;
-    }
-
-    _showVerseMenu(context, verse, tapPosition);
-  }
-
-  // ──────────────────────────────────────────────
-  // Page handling
-  // ──────────────────────────────────────────────
-
-  void _handlePageChanged(int index) {
-    final newPage = index + 1;
-    if (_currentPage == newPage) return;
-
-    _currentPage = newPage;
-    _selectedVerse.value = null;
-  }
-
-  void _onQuranPageNumberTapped() {
-    if (!mounted) return;
-
-    showDialog(
-      context: context,
-      builder: (_) {
-        return ListView.builder(
-          itemCount: 603,
-          itemBuilder: (_, index) {
-            return ListTile(
-              title: Text((index + 1).toArabicDigits()),
-              onTap: () {
-                Navigator.pop(context);
-                _pageController.animateToPage(
-                  index,
-                  duration: const Duration(milliseconds: 300),
-                  curve: Curves.easeOut,
-                );
-              },
-            );
-          },
+  Widget _myAudioPlayer() {
+    return ValueListenableBuilder<bool>(
+      valueListenable: _showAppBar,
+      builder: (_, visible, __) {
+        return AnimatedSlide(
+          duration: const Duration(milliseconds: 250),
+          curve: Curves.easeOutCubic,
+          offset: visible ? Offset.zero : const Offset(0, 1),
+          child: AnimatedOpacity(
+            duration: const Duration(milliseconds: 200),
+            opacity: visible ? 1 : 0,
+            child: const MyAudioPlayer(),
+          ),
         );
       },
     );
   }
 
-  // ──────────────────────────────────────────────
-  // UI (Scaffold NEVER rebuilds)
-  // ──────────────────────────────────────────────
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-      body: SafeArea(
-        child: ValueListenableBuilder<Verse?>(
-          valueListenable: _selectedVerse,
-          builder: (_, selectedVerse, __) {
-            return ValueListenableBuilder<Verse?>(
-              valueListenable: _playingVerse,
-              builder: (_, playingVerse, __) {
-                return SurahQuran(
-                  pageController: _pageController,
-                  selectedVerse: selectedVerse,
-                  playingVerse: playingVerse,
-                  onVerseTap: _handleVerseTap,
-                  onPageChanged: _handlePageChanged,
-                  onQuranPageNumber: _onQuranPageNumberTapped,
-                );
-              },
-            );
-          },
-        ),
+  Widget _floatingAppBar() {
+    return Padding(
+      padding: const EdgeInsets.all(8.0),
+      child: ValueListenableBuilder<bool>(
+        valueListenable: _showAppBar,
+        builder: (_, visible, __) {
+          return AnimatedSlide(
+            duration: const Duration(milliseconds: 250),
+            curve: Curves.easeOutCubic,
+            offset: visible ? Offset.zero : const Offset(0, -1),
+            child: AnimatedOpacity(
+              duration: const Duration(milliseconds: 200),
+              opacity: visible ? 1 : 0,
+              child: Container(
+                height: 56,
+                padding: const EdgeInsets.symmetric(horizontal: 12),
+                decoration: BoxDecoration(
+                  color: Theme.of(context).colorScheme.secondary,
+                  borderRadius: BorderRadius.circular(16),
+                ),
+                child: Row(
+                  children: [
+                    IconButton(
+                      icon: const Icon(Icons.arrow_back, color: Colors.white),
+                      onPressed: () => Navigator.pop(context),
+                    ),
+                    const Spacer(),
+                    IconButton(
+                      icon: const Icon(Icons.bookmark_border,
+                          color: Colors.white),
+                      onPressed: () {},
+                    ),
+                    IconButton(
+                      icon: const Icon(Icons.settings, color: Colors.white),
+                      onPressed: () {},
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          );
+        },
       ),
     );
   }

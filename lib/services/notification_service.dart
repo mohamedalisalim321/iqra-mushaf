@@ -10,6 +10,14 @@ class NotificationService {
 
   bool _initialized = false;
 
+  // Constants for notification channel
+  static const String _defaultChannelId = 'default_channel';
+  static const String _defaultChannelName = 'General Notifications';
+  static const String _defaultChannelDescription =
+      'General alerts, reminders, and updates.';
+  static const Importance _defaultImportance = Importance.high;
+  static const Priority _defaultPriority = Priority.high;
+
   /// -------------------------------------------
   /// INITIALIZATION
   /// -------------------------------------------
@@ -21,7 +29,7 @@ class NotificationService {
       const AndroidInitializationSettings androidSettings =
           AndroidInitializationSettings('@mipmap/ic_launcher');
 
-      // Combine both
+      // Combine both Android and iOS initialization
       const InitializationSettings settings = InitializationSettings(
         android: androidSettings,
       );
@@ -29,9 +37,7 @@ class NotificationService {
       // Handle taps on notification
       await _plugin.initialize(
         settings,
-        onDidReceiveNotificationResponse: (details) {
-          print("Notification tapped: ${details.payload}");
-        },
+        onDidReceiveNotificationResponse: _onNotificationTapped,
       );
 
       // Android 13+ runtime permission
@@ -50,7 +56,20 @@ class NotificationService {
     final status = await Permission.notification.status;
 
     if (status.isDenied) {
+      // Request permissions if not granted
       await Permission.notification.request();
+    } else if (status.isPermanentlyDenied) {
+      // Suggest opening app settings if permission is permanently denied
+      _openAppSettings();
+    }
+  }
+
+  Future<void> _openAppSettings() async {
+    final opened = await openAppSettings();
+    if (opened) {
+      print('Opened app settings to allow notification permission.');
+    } else {
+      print('Could not open app settings.');
     }
   }
 
@@ -60,10 +79,10 @@ class NotificationService {
   Future<void> _createDefaultChannel() async {
     const AndroidNotificationChannel defaultChannel =
         AndroidNotificationChannel(
-      'default_channel',
-      'General Notifications',
-      description: 'General alerts, reminders, and updates.',
-      importance: Importance.high,
+      _defaultChannelId,
+      _defaultChannelName,
+      description: _defaultChannelDescription,
+      importance: _defaultImportance,
       playSound: true,
     );
 
@@ -80,15 +99,16 @@ class NotificationService {
     required String title,
     required String body,
     String? payload,
+    String channelId = _defaultChannelId,
   }) async {
     await init();
 
     const AndroidNotificationDetails androidDetails =
         AndroidNotificationDetails(
-      'default_channel',
-      'General Notifications',
-      importance: Importance.high,
-      priority: Priority.high,
+      _defaultChannelId,
+      _defaultChannelName,
+      importance: _defaultImportance,
+      priority: _defaultPriority,
       playSound: true,
     );
 
@@ -105,37 +125,17 @@ class NotificationService {
     );
   }
 
-  // Future<void> schedule({
-  //   required String title,
-  //   required String body,
-  //   required DateTime dateTime,
-  //   String? payload,
-  // }) async {
-  //   await init();
+  /// -------------------------------------------
+  /// NOTIFICATION TAP HANDLER
+  /// -------------------------------------------
+  void _onNotificationTapped(NotificationResponse details) {
+    // This function gets called when the user taps a notification
+    print("Notification tapped: ${details.payload}");
 
-  //   final androidDetails = AndroidNotificationDetails(
-  //     'scheduled_channel',
-  //     'Scheduled Notifications',
-  //     importance: Importance.high,
-  //     priority: Priority.high,
-  //   );
-
-  //   final details = NotificationDetails(
-  //     android: androidDetails,
-  //     iOS: const DarwinNotificationDetails(),
-  //   );
-
-  //   await _plugin.zonedSchedule(
-  //     dateTime.millisecondsSinceEpoch ~/ 1000,
-  //     title,
-  //     body,
-  //     // Convert to local timezone-safe format
-  //     tz.TZDateTime.from(dateTime, tz.local),
-  //     details,
-  //     uiLocalNotificationDateInterpretation:
-  //         UILocalNotificationDateInterpretation.absoluteTime,
-  //     androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
-  //     payload: payload,
-  //   );
-  // }
+    // Handle tap navigation or custom logic
+    if (details.payload != null) {
+      // Perform some action based on the payload
+      // For example, navigate to a specific screen
+    }
+  }
 }

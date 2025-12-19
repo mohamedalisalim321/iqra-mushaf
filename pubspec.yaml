@@ -92,21 +92,38 @@ flutter:
   # list giving the asset and other descriptors for the font. For
   # example:
   fonts:
+### App Fonts
+    - family: "Cairo"
+      fonts:
+        - asset: assets/fonts/App Fonts/Cairo-Regular.ttf
+
+    - family: "Lateef"
+      fonts:
+        - asset: assets/fonts/App Fonts/Lateef-Regular.ttf
+
+    - family: "Raleway"
+      fonts:
+        - asset: assets/fonts/App Fonts/Raleway-Regular.ttf
+
+    - family: "Lora"
+      fonts:
+        - asset: assets/fonts/App Fonts/Lora-Regular.ttf
+### Quran Fonts
     - family: "arsura"
       fonts:
-        - asset: assets/fonts/arsura.ttf
+        - asset: assets/fonts/Quran Fonts/arsura.ttf
 
     - family: "Hafs"
       fonts:
-        - asset: assets/fonts/Hafs.ttf
+        - asset: assets/fonts/Quran Fonts/Hafs.ttf
     
     - family: "UthmanicHafs"
       fonts:
-        - asset: assets/fonts/UthmanicHafsV22.ttf
+        - asset: assets/fonts/Quran Fonts/UthmanicHafsV22.ttf
 
     - family: "SurahName"
       fonts:
-        - asset: assets/fonts/surah-name-v1.ttf
+        - asset: assets/fonts/Quran Fonts/surah-name-v1.ttf
 
     - family: QCF_BSML 
       fonts:

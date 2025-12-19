@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../database/surah_database.dart';
 import '../services/notification_service.dart';
-import 'quran/surahs_page.dart';
+import 'quran/surahs_list_page.dart';
 import 'settings/settings_page.dart';
 
 class HomePage extends StatefulWidget {
@@ -20,9 +20,11 @@ class _HomePageState extends State<HomePage> {
         leading: IconButton(
           onPressed: () {
             Navigator.push(
-                context, MaterialPageRoute(builder: (_) => SettingsPage()));
+              context,
+              MaterialPageRoute(builder: (_) => const SettingsPage()),
+            );
           },
-          icon: Icon(Icons.settings_rounded),
+          icon: const Icon(Icons.settings_rounded),
         ),
       ),
       body: Center(
@@ -36,7 +38,7 @@ class _HomePageState extends State<HomePage> {
                   Navigator.push(
                     context,
                     MaterialPageRoute(
-                      builder: (_) => const SurahsPage(),
+                      builder: (_) => const SurahsListPage(),
                     ),
                   );
                 },

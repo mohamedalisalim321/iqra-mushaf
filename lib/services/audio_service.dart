@@ -1,4 +1,6 @@
+import 'dart:async';
 import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:isar/isar.dart';
 import 'package:just_audio/just_audio.dart';
@@ -26,11 +28,15 @@ class AudioService {
 
   final ValueNotifier<bool> playing = ValueNotifier(false);
   final ValueNotifier<bool> repeatVerse = ValueNotifier(false);
-
-  /// 👇 UI visibility (derived, not toggled)
   final ValueNotifier<bool> showAudioPlayer = ValueNotifier(false);
 
+  /// 🔥 download progress (0 → 1)
+  final ValueNotifier<double> downloadProgress = ValueNotifier(0);
+
   bool autoPlayNext = true;
+
+  /// avoid double downloads
+  final Set<String> _activeDownloads = {};
 
   /// ────────────────────────────
   /// STREAMS
@@ -44,13 +50,10 @@ class AudioService {
   static Future<void> init() async {
     final service = AudioService.instance;
 
-    /// Play / pause
     service._player.playerStateStream.listen((state) {
       service.playing.value = state.playing;
-      service._updateAudioPlayerVisibility();
     });
 
-    /// Completion / repeat / auto-next
     service._player.processingStateStream.listen((state) async {
       if (state == ProcessingState.completed) {
         if (service.repeatVerse.value) {
@@ -87,50 +90,74 @@ class AudioService {
         .findFirst();
   }
 
-  Future<VerseAudio> downloadVerse(Verse verse) async {
-    final dir = await getApplicationDocumentsDirectory();
-    final folder = "${dir.path}/audio/${currentReciter.value!.identifier}";
-
-    await Directory(folder).create(recursive: true);
-
-    final filePath = "$folder/${verse.id}.mp3";
-    final file = File(filePath);
-
-    if (!await file.exists()) {
-      final response = await http.get(Uri.parse(getVerseUrl(verse)));
-      if (response.statusCode != 200) {
-        throw Exception("Failed to download verse audio");
-      }
-      await file.writeAsBytes(response.bodyBytes);
+  Future<void> _downloadVerse(Verse verse) async {
+    final key = "${currentReciter.value!.identifier}-${verse.id}";
+    if (_activeDownloads.contains(key)) {
+      return;
     }
 
-    final audio = VerseAudio()
-      ..reciterIdentifier = currentReciter.value!.identifier
-      ..surahId = verse.surahNumber
-      ..verseId = verse.verseNumber
-      ..filePath = filePath;
+    _activeDownloads.add(key);
 
-    await isar.writeTxn(() async {
-      await isar.verseAudios.put(audio);
-    });
+    try {
+      final dir = await getApplicationDocumentsDirectory();
+      final folder = "${dir.path}/audio/${currentReciter.value!.identifier}";
+      await Directory(folder).create(recursive: true);
 
-    return audio;
+      final filePath = "$folder/${verse.id}.mp3";
+      final file = File(filePath);
+
+      if (!await file.exists()) {
+        final client = http.Client();
+        final res = await client.send(
+          http.Request("GET", Uri.parse(getVerseUrl(verse))),
+        );
+
+        final sink = file.openWrite();
+        await for (final chunk in res.stream) {
+          sink.add(chunk);
+        }
+
+        await sink.close();
+        client.close();
+      }
+
+      final audio = VerseAudio()
+        ..reciterIdentifier = currentReciter.value!.identifier
+        ..surahId = verse.surahNumber
+        ..verseId = verse.verseNumber
+        ..filePath = filePath;
+
+      await isar.writeTxn(() async {
+        await isar.verseAudios.put(audio);
+      });
+    } finally {
+      _activeDownloads.remove(key);
+    }
   }
 
   /// ────────────────────────────
-  /// PLAYBACK
+  /// PLAYBACK (⚡ STREAM FIRST)
   /// ────────────────────────────
   Future<void> playVerse(Verse verse) async {
     currentVerse.value = verse;
-    _updateAudioPlayerVisibility();
+    _syncVisibilityWithVerse(); // ✅ stable
 
     try {
-      final audio = await getCachedAudio(verse) ?? await downloadVerse(verse);
+      final cached = await getCachedAudio(verse);
 
-      await _player.setFilePath(audio.filePath);
+      if (cached != null) {
+        /// 🎧 instant local play
+        await _player.setFilePath(cached.filePath);
+      } else {
+        /// ⚡ stream instantly
+        await _player.setUrl(getVerseUrl(verse));
+
+        /// 📥 cache in background
+        _downloadVerse(verse);
+      }
+
       await _player.play();
-
-      _prefetchNext();
+      _prefetchNextBatch();
     } catch (e) {
       debugPrint("❌ Play error: $e");
     }
@@ -139,7 +166,9 @@ class AudioService {
   Future<void> playNextVerse() async {
     if (currentVerse.value == null) return;
 
-    final surah = await SurahDatabase.getSurah(currentVerse.value!.surahNumber);
+    final surah = await SurahDatabase.getSurah(
+      currentVerse.value!.surahNumber,
+    );
 
     final next = currentVerse.value!.verseNumber + 1;
     if (next > surah!.versesCount) return;
@@ -174,21 +203,26 @@ class AudioService {
     await playNextVerse();
   }
 
-  Future<void> _prefetchNext() async {
+  /// ────────────────────────────
+  /// 🔥 PREFETCH NEXT 3 VERSES
+  /// ────────────────────────────
+  Future<void> _prefetchNextBatch() async {
     if (currentVerse.value == null) return;
 
     final surah = await SurahDatabase.getSurah(currentVerse.value!.surahNumber);
 
-    final next = currentVerse.value!.verseNumber + 1;
-    if (next > surah!.versesCount) return;
+    for (int i = 1; i <= 3; i++) {
+      final next = currentVerse.value!.verseNumber + i;
+      if (next > surah!.versesCount) break;
 
-    final v = await SurahDatabase.getVerseQcf(
-      currentVerse.value!.surahNumber,
-      next,
-    );
+      final v = await SurahDatabase.getVerseQcf(
+        currentVerse.value!.surahNumber,
+        next,
+      );
 
-    if (await getCachedAudio(v) == null) {
-      downloadVerse(v); // fire & forget
+      if (await getCachedAudio(v) == null) {
+        _downloadVerse(v);
+      }
     }
   }
 
@@ -197,26 +231,27 @@ class AudioService {
   /// ────────────────────────────
   Future<void> pause() => _player.pause();
   Future<void> resume() => _player.play();
+  Future<void> seek(Duration d) => _player.seek(d);
 
   Future<void> stop() async {
     await _player.stop();
     currentVerse.value = null;
-    _updateAudioPlayerVisibility();
+    _syncVisibilityWithVerse(); // ✅ hides once
   }
-
-  Future<void> seek(Duration d) => _player.seek(d);
 
   void toggleRepeatVerse() {
     repeatVerse.value = !repeatVerse.value;
   }
 
-  /// ────────────────────────────
-  /// UI VISIBILITY LOGIC (IMPORTANT)
-  /// ────────────────────────────
-  void _updateAudioPlayerVisibility() {
-    final shouldShow = currentVerse.value != null &&
-        (_player.processingState != ProcessingState.idle);
+  void toggleAutoPlay() {
+    autoPlayNext = !autoPlayNext;
+  }
 
+  /// ────────────────────────────
+  /// UI VISIBILITY
+  /// ────────────────────────────
+  void _syncVisibilityWithVerse() {
+    final shouldShow = currentVerse.value != null;
     if (showAudioPlayer.value != shouldShow) {
       showAudioPlayer.value = shouldShow;
     }
