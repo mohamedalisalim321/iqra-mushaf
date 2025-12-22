@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 
 class MyDropdownButton<T> extends StatelessWidget {
   final T? selectedValue;
@@ -14,23 +15,28 @@ class MyDropdownButton<T> extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return DropdownButton<T>(
-      value: selectedValue,
-      isExpanded: false, // Ensures the dropdown takes up all available width
-      onChanged: onChanged,
-      dropdownColor: Colors.white,
-      underline: Container(), // Removes the underline for a clean look
-      icon: const Icon(
-        Icons.arrow_drop_down,
-        color: Colors.black,
-      ), // Custom icon
-      iconSize: 24.0, // Size of the icon
-      style: const TextStyle(
-        color: Colors.black,
-        fontSize: 16.0,
-        fontWeight: FontWeight.w400,
+    final theme = Theme.of(context).colorScheme;
+
+    return Container(
+      decoration: BoxDecoration(
+        color: theme.secondary,
+        borderRadius: BorderRadius.circular(12.r),
       ),
-      items: dropdownItems,
+      padding: EdgeInsets.all(4.h),
+      child: DropdownButton<T>(
+        value: selectedValue,
+
+        isExpanded: false, // Ensures the dropdown takes up all available width
+        onChanged: onChanged,
+        dropdownColor: Colors.white,
+        underline: Container(), // Removes the underline for a clean look
+        style: TextStyle(
+          color: Colors.white,
+          fontSize: 16.0.sp,
+        ),
+
+        items: dropdownItems,
+      ),
     );
   }
 }

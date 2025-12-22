@@ -4,13 +4,11 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 
 import 'database/app_database.dart';
-// import 'pages/home_page.dart';
 import 'pages/quran/surahs_list_page.dart';
 
 import 'providers/app_settings.dart';
 import 'services/audio_service.dart';
 import 'themes/theme_provider.dart';
-//import 'services/notification_service.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -19,8 +17,8 @@ void main() async {
     await Future.wait([
       AppDatabase.initialize(),
       AudioService.init(),
-      AppSettings().init(),
       AppSettings().resetSettings(),
+      AppSettings().init(),
       //NotificationService.instance.init(),
     ]);
   } catch (e) {

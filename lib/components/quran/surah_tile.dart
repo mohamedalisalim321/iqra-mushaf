@@ -107,7 +107,7 @@ class SurahTile extends StatelessWidget {
           mainAxisSize: MainAxisSize.min,
           children: [
             Text(
-              'الآيات ( $versesCount )',
+              'الآيات $versesCount',
               style: TextStyle(
                 fontFamily: 'Lateef',
                 fontSize: 16.sp,

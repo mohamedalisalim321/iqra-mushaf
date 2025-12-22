@@ -33,10 +33,13 @@ class AudioService {
   /// 🔥 download progress (0 → 1)
   final ValueNotifier<double> downloadProgress = ValueNotifier(0);
 
-  bool autoPlayNext = true;
+  final ValueNotifier<bool> autoPlayNext = ValueNotifier(true);
+  final ValueNotifier<bool> animateToCurrentVerse = ValueNotifier(false);
 
   /// avoid double downloads
   final Set<String> _activeDownloads = {};
+
+  final ValueNotifier<String?> uiMessage = ValueNotifier(null);
 
   /// ────────────────────────────
   /// STREAMS
@@ -90,11 +93,13 @@ class AudioService {
         .findFirst();
   }
 
+  void _notifyError(String message) {
+    uiMessage.value = message;
+  }
+
   Future<void> _downloadVerse(Verse verse) async {
     final key = "${currentReciter.value!.identifier}-${verse.id}";
-    if (_activeDownloads.contains(key)) {
-      return;
-    }
+    if (_activeDownloads.contains(key)) return;
 
     _activeDownloads.add(key);
 
@@ -108,9 +113,19 @@ class AudioService {
 
       if (!await file.exists()) {
         final client = http.Client();
-        final res = await client.send(
-          http.Request("GET", Uri.parse(getVerseUrl(verse))),
+
+        final request = http.Request(
+          "GET",
+          Uri.parse(getVerseUrl(verse)),
         );
+
+        final res = await client.send(request).timeout(
+              const Duration(seconds: 10),
+            );
+
+        if (res.statusCode != 200) {
+          throw const HttpException("Download failed");
+        }
 
         final sink = file.openWrite();
         await for (final chunk in res.stream) {
@@ -130,6 +145,13 @@ class AudioService {
       await isar.writeTxn(() async {
         await isar.verseAudios.put(audio);
       });
+    } on SocketException {
+      _notifyError("❌ No internet connection");
+    } on TimeoutException {
+      _notifyError("⏳ Connection timeout");
+    } catch (e) {
+      _notifyError("⚠️ Download failed");
+      debugPrint("Download error: $e");
     } finally {
       _activeDownloads.remove(key);
     }
@@ -140,26 +162,25 @@ class AudioService {
   /// ────────────────────────────
   Future<void> playVerse(Verse verse) async {
     currentVerse.value = verse;
-    _syncVisibilityWithVerse(); // ✅ stable
+    _syncVisibilityWithVerse();
 
     try {
       final cached = await getCachedAudio(verse);
 
       if (cached != null) {
-        /// 🎧 instant local play
         await _player.setFilePath(cached.filePath);
       } else {
-        /// ⚡ stream instantly
         await _player.setUrl(getVerseUrl(verse));
-
-        /// 📥 cache in background
         _downloadVerse(verse);
       }
 
       await _player.play();
       _prefetchNextBatch();
+    } on SocketException {
+      _notifyError("❌ No internet connection");
     } catch (e) {
-      debugPrint("❌ Play error: $e");
+      _notifyError("⚠️ Failed to play audio");
+      debugPrint("Play error: $e");
     }
   }
 
@@ -196,7 +217,7 @@ class AudioService {
   }
 
   Future<void> _handleAutoNext() async {
-    if (!autoPlayNext || currentVerse.value == null) {
+    if (!autoPlayNext.value || currentVerse.value == null) {
       stop();
       return;
     }
@@ -244,7 +265,11 @@ class AudioService {
   }
 
   void toggleAutoPlay() {
-    autoPlayNext = !autoPlayNext;
+    autoPlayNext.value = !autoPlayNext.value;
+  }
+
+  void toggleAnimtingVerse() {
+    animateToCurrentVerse.value = !animateToCurrentVerse.value;
   }
 
   /// ────────────────────────────

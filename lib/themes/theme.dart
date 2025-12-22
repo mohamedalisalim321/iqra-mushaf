@@ -5,35 +5,23 @@ import 'package:flutter/material.dart';
 // -------------------------------------------
 
 // Golds
-const _goldLight = Color(0xFFE8C57A); // Soft, warm gold
-const _goldDeep = Color(0xFFD6A84F); // Rich gold, deeper tone
+const _goldLight = Color(0xFFE2C178); // Softer antique gold
+const _goldDeep = Color(0xFFCFA24A); // Deeper, calmer gold (less harsh)
 
 // Browns
-const _brownDeep = Color(0xFF4A3825); // Deep brown for text and subtle surfaces
+const _brownDeep = Color(0xFF3F2E1D); // Warmer, ink-like brown
 
 // Parchment
-const _parchmentLight = Color(0xFFF9F5EB); // Soft parchment background
-const _parchmentSurface =
-    Color(0xFFFFFCF7); // Surface color for cards or background
-const _parchmentCard =
-    Color(0xFFF2E9D9); // Gentle card surface color for soft contrast
+const _parchmentLight = Color(0xFFF7F2E7); // Aged parchment feel
+const _parchmentSurface = Color(0xFFFCF9F2); // Clean paper surface
+const _parchmentCard = Color(0xFFF0E6D3); // Subtle separation for card
 
 // Dark mode
-const _nightDeep = Color(0xFF18130F); // Deep dark background for dark mode
-const _nightSurface = Color(0xFF221D18); // Dark surface color for content areas
-const _nightOverlay =
-    Color(0xFF2D2721); // Overlay for layers, soft mid-darkness
-const _nightAccent = Color(0xFFC6B089); // Elegant gold for accents
-const _nightText = Color(0xFFF4ECD8); // Off-white text color for readability
-
-// Sepia Mode
-const _sepiaBackground = Color(0xFFF0E1D6); // Soft sepia background color
-const _sepiaSurface = Color(0xFFDBC6A7); // Surface color for content areas
-const _sepiaCard = Color(0xFFE2D5B7); // Card background with sepia tint
-const _sepiaAccent = Color(0xFFBC9D6B); // Sepia gold for accents
-const _sepiaText = Color(0xFF4E3B31); // Text color for sepia (dark brown)
-const _sepiaSecondary =
-    Color(0xFF9C7A57); // Secondary sepia tones for highlights
+const _nightDeep = Color(0xFF14110E); // True deep night (AMOLED friendly)
+const _nightSurface = Color(0xFF1E1A16); // Soft elevation surface
+const _nightOverlay = Color(0xFF29241F); // Card & overlay separation
+const _nightAccent = Color(0xFFC2AB78); // Muted antique gold
+const _nightText = Color(0xFFF1E9D6); // Warm off-white (no glare)
 
 /// -------------------------------------------
 ///  LIGHT MODE THEME (Mushaf Premium)
@@ -48,7 +36,7 @@ final ThemeData lightMode = ThemeData(
     secondary: _goldLight, // Secondary accents
     onSecondary: Colors.white,
     surface: _parchmentSurface, // Background for cards, surfaces
-    onSurface: _brownDeep, // Text color on surface
+    onSurface: Colors.black, // Text color on surface
     shadow: Colors.black54, // General shadow color
   ),
   appBarTheme: const AppBarTheme(
@@ -84,7 +72,7 @@ final ThemeData darkMode = ThemeData(
     secondary: _goldDeep, // Secondary accents
     onSecondary: Colors.black, // Text on secondary elements
     surface: _nightSurface, // Surface color for cards, content areas
-    onSurface: _nightText, // Text color on surfaces
+    onSurface: Colors.white, // Text color on surfaces
     shadow: Colors.black, // General shadow color for dark mode
   ),
   appBarTheme: const AppBarTheme(
@@ -105,40 +93,4 @@ final ThemeData darkMode = ThemeData(
     selectionHandleColor: _nightAccent, // Selection handle color
   ),
   shadowColor: Colors.black54,
-);
-
-/// -------------------------------------------
-///  SEPIA MODE THEME (Vintage Sepia Premium)
-// -------------------------------------------
-final ThemeData sepiaMode = ThemeData(
-  useMaterial3: true,
-  brightness: Brightness.light, // Sepia usually has a softer, light vibe
-  scaffoldBackgroundColor: _sepiaBackground,
-  colorScheme: const ColorScheme.light(
-    primary: _sepiaAccent, // Sepia gold for primary actions
-    onPrimary: Colors.white, // Text on primary elements
-    secondary: _sepiaSecondary, // Secondary sepia tones for accents
-    onSecondary: Colors.white,
-    surface: _sepiaSurface, // Background for cards and content areas
-    onSurface: _sepiaText, // Text color on surface (dark brown)
-    shadow: Colors.black54, // Subtle shadow
-  ),
-  appBarTheme: const AppBarTheme(
-    backgroundColor: _sepiaSurface,
-    shadowColor: Colors.black26,
-    centerTitle: true,
-    titleTextStyle: TextStyle(
-      color: _sepiaText, // Title text color in the app bar
-      fontWeight: FontWeight.w700,
-    ),
-  ),
-  cardColor: _sepiaCard, // Soft sepia color for cards
-  dividerColor: Colors.black26, // Divider color for UI elements
-  splashColor: _sepiaAccent.withOpacity(0.15),
-  highlightColor: _sepiaAccent.withOpacity(0.07),
-  textSelectionTheme: const TextSelectionThemeData(
-    cursorColor: _sepiaAccent, // Cursor color in text fields
-    selectionHandleColor: _sepiaAccent, // Selection handle color
-  ),
-  shadowColor: Colors.black26,
 );

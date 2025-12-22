@@ -52,8 +52,10 @@ class AppDatabase {
     print("Initializing Isar database...");
 
     try {
-      final dir = await getApplicationDocumentsDirectory();
-      final path = dir.path;
+      final dir = await getDownloadsDirectory();
+      final path = dir!.path;
+
+      print(path);
 
       _isar = await _openOrRecover(path);
 

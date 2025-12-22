@@ -20,7 +20,7 @@ class MySearchbar extends StatelessWidget {
     final Color textColor = colorScheme.onSurface;
     final Color hintColor = textColor.withOpacity(0.7);
     final EdgeInsets padding =
-        EdgeInsets.symmetric(horizontal: 14.w, vertical: 12.h);
+        EdgeInsets.symmetric(horizontal: 20.w, vertical: 14.h);
 
     return TextField(
       controller: controller,
@@ -30,21 +30,49 @@ class MySearchbar extends StatelessWidget {
       style: TextStyle(
         fontFamily: "Kufi",
         color: textColor,
+        fontSize: 16.sp,
       ),
       decoration: InputDecoration(
-        prefixIcon: const Icon(Icons.search, color: Colors.grey),
+        prefixIcon: Padding(
+          padding: EdgeInsets.symmetric(horizontal: 12.w),
+          child:
+              Icon(Icons.search, color: colorScheme.onSurface.withOpacity(0.6)),
+        ),
+        // suffixIcon: controller.text.isNotEmpty
+        //     ? GestureDetector(
+        //         onTap: () => controller.clear(),
+        //         child: Icon(Icons.clear,
+        //             color: colorScheme.onSurface.withOpacity(0.6)),
+        //       )
+        //     : null,
         hintText: hintText,
         hintStyle: TextStyle(
           fontFamily: "Kufi",
           color: hintColor,
+          fontSize: 16.sp,
         ),
         contentPadding: padding,
         border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(8.r),
-          borderSide: BorderSide(color: colorScheme.onSurface.withOpacity(0.2)),
+          borderRadius: BorderRadius.circular(24.r), // More rounded corners
+          borderSide: BorderSide.none,
         ),
         filled: true,
         fillColor: colorScheme.surface.withOpacity(0.05),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(24.r),
+          borderSide: BorderSide(
+            color: colorScheme.primary.withOpacity(0.5),
+            width: 1.5,
+          ),
+        ),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(24.r),
+          borderSide: BorderSide(
+            color: colorScheme.onSurface.withOpacity(0.2),
+            width: 1.2,
+          ),
+        ),
+        focusColor: colorScheme.primary.withOpacity(0.1),
       ),
     );
   }

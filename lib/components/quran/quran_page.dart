@@ -27,16 +27,32 @@ class QuranPage extends StatefulWidget {
   });
 
   @override
-  State<QuranPage> createState() => QuranPageState();
+  State<QuranPage> createState() => _QuranPageState();
 }
 
-class QuranPageState extends State<QuranPage> {
+class _QuranPageState extends State<QuranPage> {
   late final Future<PageData> _pageFuture;
+
+  /// Cache processed verse text (VERY important)
+  final Map<String, String> _qcfCache = {};
 
   @override
   void initState() {
     super.initState();
     _pageFuture = _loadPage(widget.page);
+  }
+
+  @override
+  void dispose() {
+    _disposeRecognizers();
+    super.dispose();
+  }
+
+  void _disposeRecognizers() {
+    for (final r in widget.recognizers) {
+      r.dispose();
+    }
+    widget.recognizers.clear();
   }
 
   @override
@@ -51,8 +67,14 @@ class QuranPageState extends State<QuranPage> {
         final data = snapshot.data!;
         final fontSize = getFontSize(widget.page, context).sp;
 
-        // 🔥 Clear recognizers before rebuilding spans
-        widget.recognizers.clear();
+        _disposeRecognizers(); // 🔥 SAFE cleanup before rebuild
+
+        final baseStyle = TextStyle(
+          fontFamily: data.font,
+          fontSize: fontSize,
+          height: 2.1.h,
+          color: Theme.of(context).colorScheme.onSurface,
+        );
 
         return Column(
           children: [
@@ -60,17 +82,12 @@ class QuranPageState extends State<QuranPage> {
             Expanded(
               child: RepaintBoundary(
                 child: RichText(
-                  text: TextSpan(
-                    children: _buildSpans(data),
-                    style: TextStyle(
-                      fontFamily: data.font,
-                      fontSize: fontSize,
-                      height: 2.1.h,
-                      color: Theme.of(context).colorScheme.onSurface,
-                    ),
-                  ),
                   textDirection: TextDirection.rtl,
                   textAlign: TextAlign.center,
+                  text: TextSpan(
+                    style: baseStyle,
+                    children: _buildSpans(data),
+                  ),
                 ),
               ),
             ),
@@ -81,26 +98,22 @@ class QuranPageState extends State<QuranPage> {
     );
   }
 
-  // ───────────────────────── HEADER ─────────────────────────
+  // ───────────────── HEADER ─────────────────
 
   Widget _buildHeader(PageData data) {
     return Padding(
       padding: EdgeInsets.symmetric(horizontal: 8.h),
-      child: Column(
-        children: [
-          Text(
-            data.surahsNames.join('، '),
-            style: TextStyle(
-              fontSize: 12.sp,
-              color: Theme.of(context).colorScheme.onSurface,
-            ),
-          ),
-        ],
+      child: Text(
+        data.surahsNames.join('، '),
+        style: TextStyle(
+          fontSize: 12.sp,
+          color: Theme.of(context).colorScheme.onSurface,
+        ),
       ),
     );
   }
 
-  // ───────────────────────── FOOTER ─────────────────────────
+  // ───────────────── FOOTER ─────────────────
 
   Widget _buildFooter() {
     return Padding(
@@ -109,15 +122,13 @@ class QuranPageState extends State<QuranPage> {
         mainAxisAlignment:
             widget.page.isOdd ? MainAxisAlignment.start : MainAxisAlignment.end,
         children: [
-          QuranPageNumber(
-            pageNumber: widget.page,
-          ),
+          QuranPageNumber(pageNumber: widget.page),
         ],
       ),
     );
   }
 
-  // ───────────────────────── SPANS ─────────────────────────
+  // ───────────────── SPANS ─────────────────
 
   List<InlineSpan> _buildSpans(PageData data) {
     final spans = <InlineSpan>[];
@@ -137,7 +148,6 @@ class QuranPageState extends State<QuranPage> {
           r.surah,
           v,
           data.verses['${r.surah}:$v']!,
-          data.font,
           isFirst: v == r.start,
         );
       }
@@ -174,23 +184,24 @@ class QuranPageState extends State<QuranPage> {
     List<InlineSpan> spans,
     int surah,
     int verse,
-    Verse v,
-    String fontFamily, {
+    Verse v, {
     required bool isFirst,
   }) {
-    final text = isFirst
-        ? "${v.qcfData.replaceAll(" ", "").substring(0, 1)}\u200A${v.qcfData.replaceAll(" ", "").substring(1)}"
-        : v.qcfData.replaceAll(' ', '');
-    // final text =
-    //     isFirst ? "${v.qcfData[0]}\u200A${v.qcfData.substring(1)}" : v.qcfData;
+    final key = '${v.surahNumber}:${v.verseNumber}';
+
+    final cleaned = _qcfCache.putIfAbsent(
+      key,
+      () => v.qcfData.replaceAll(' ', ''),
+    );
+
+    final text =
+        isFirst ? '${cleaned[0]}\u200A${cleaned.substring(1)}' : cleaned;
 
     final isPlaying = _sameVerse(widget.playingVerse, v);
     final isSelected = _sameVerse(widget.selectedVerse, v);
 
     final recognizer = LongPressGestureRecognizer()
-      ..onLongPress = () {
-        widget.onVerseTap?.call(v);
-      };
+      ..onLongPress = () => widget.onVerseTap?.call(v);
 
     widget.recognizers.add(recognizer);
 
@@ -209,11 +220,12 @@ class QuranPageState extends State<QuranPage> {
     );
   }
 
-  bool _sameVerse(Verse? a, Verse b) {
-    return a != null &&
-        a.surahNumber == b.surahNumber &&
-        a.verseNumber == b.verseNumber;
-  }
+  bool _sameVerse(Verse? a, Verse b) =>
+      a != null &&
+      a.surahNumber == b.surahNumber &&
+      a.verseNumber == b.verseNumber;
+
+  // ───────────────── DATA ─────────────────
 
   Future<PageData> _loadPage(int page) async {
     final rangesRaw = SurahDatabase.getPageData(page);
@@ -230,19 +242,13 @@ class QuranPageState extends State<QuranPage> {
       }
     }
 
-    List<Future<String>> surahsNameFutures = ranges.map((ran) async {
-      final surah = await SurahDatabase.getSurah(ran.surah);
-      return surah?.surahName ?? '';
-    }).toList();
-
-    // Wait for all the Future<String> to complete
-    final surahsName = await Future.wait(surahsNameFutures);
-
-    return PageData(
-      ranges,
-      verses,
-      font,
-      surahsName,
+    final surahsNames = await Future.wait(
+      ranges.map((ran) async {
+        final s = await SurahDatabase.getSurah(ran.surah);
+        return s?.surahName ?? '';
+      }),
     );
+
+    return PageData(ranges, verses, font, surahsNames);
   }
 }

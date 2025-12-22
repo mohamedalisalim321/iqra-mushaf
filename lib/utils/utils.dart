@@ -35,7 +35,8 @@ String convertToArabicNumber(int number) => number.toArabicDigits();
 /// ( ... )   → RED
 /// ﴿ ... ﴾   → GREEN
 /// { ... }   → BLUE
-List<TextSpan> parseArabicText(String text) {
+List<TextSpan> parseArabicText(BuildContext context, String text) {
+  final theme = Theme.of(context).colorScheme;
   final List<TextSpan> spans = [];
   final pattern = RegExp(
       r'(\(.*?\)|﴿.*?﴾|{.*?})'); // Regex pattern to match specific segments
@@ -49,7 +50,7 @@ List<TextSpan> parseArabicText(String text) {
       spans.add(
         TextSpan(
           text: text.substring(lastIndex, match.start),
-          style: const TextStyle(color: Colors.black),
+          style: TextStyle(color: theme.onSurface),
         ),
       );
     }
@@ -61,11 +62,11 @@ List<TextSpan> parseArabicText(String text) {
     if (matched.startsWith('(')) {
       color = Colors.red;
     } else if (matched.startsWith('﴿')) {
-      color = Colors.green;
+      color = Colors.green.shade400;
     } else if (matched.startsWith('{')) {
       color = Colors.blue;
     } else {
-      color = Colors.black;
+      color = theme.onSurface;
     }
 
     spans.add(
@@ -83,7 +84,7 @@ List<TextSpan> parseArabicText(String text) {
     spans.add(
       TextSpan(
         text: text.substring(lastIndex),
-        style: const TextStyle(color: Colors.black),
+        style: TextStyle(color: theme.onSurface),
       ),
     );
   }

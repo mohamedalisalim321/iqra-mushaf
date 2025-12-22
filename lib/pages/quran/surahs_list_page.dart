@@ -247,7 +247,6 @@ class _SurahsListPageState extends State<SurahsListPage> {
           color: Colors.white,
         ),
       ),
-     
     );
   }
 }

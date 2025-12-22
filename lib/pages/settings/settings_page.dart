@@ -2,6 +2,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:provider/provider.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import '../../components/my_dropdown_button.dart';
 import '../../database/reciters_database.dart';
@@ -18,23 +19,79 @@ class SettingsPage extends StatefulWidget {
 }
 
 class _SettingsPageState extends State<SettingsPage> {
-  late final Future<List<Reciter>> _recitersFuture;
   final AudioService _audioService = AudioService.instance;
+  List<Reciter>? _cachedReciters;
 
   @override
   void initState() {
     super.initState();
-    _recitersFuture = _loadReciters();
+    _loadReciters();
   }
 
   Future<List<Reciter>> _loadReciters() async {
-    final reciters = await RecitersDatabase.getAllReciters();
+    if (_cachedReciters != null) return _cachedReciters!;
 
-    if (_audioService.currentReciter.value == null && reciters.isNotEmpty) {
-      _audioService.setReciter(reciters[reciters.length > 15 ? 15 : 0]);
+    try {
+      final reciters = await RecitersDatabase.getAllReciters();
+
+      if (_audioService.currentReciter.value == null && reciters.isNotEmpty) {
+        _audioService.setReciter(reciters[reciters.length > 15 ? 15 : 0]);
+      }
+
+      _cachedReciters = reciters;
+      return reciters;
+    } catch (_) {
+      return [];
     }
+  }
 
-    return reciters;
+  void _showDeveloperDialog() {
+    showDialog(
+      context: context,
+      builder: (context) {
+        return CupertinoAlertDialog(
+          title: Text(
+            "Mohamed Ali Salim",
+            style: TextStyle(
+              fontFamily: "Lora",
+              fontSize: 24.sp,
+            ),
+          ),
+          content: Column(
+            children: [
+              // my image
+              Image.asset(
+                "assets/images/mohamed_ali_salim.jpg",
+              ),
+
+              Text(
+                "لقد جاهدت كي أخرج هذا التطبيق فإن أصبت فمن ٱللَّه وإن أخطأت فمن نفسي والشيطان",
+                style: TextStyle(fontFamily: "Kufi", fontSize: 18.sp),
+              ),
+
+              IconButton(
+                onPressed: () async {
+                  final uri = Uri.parse(
+                    'https://www.facebook.com/profile.php?id=61561233540084',
+                  );
+
+                  if (!await launchUrl(
+                    uri,
+                    mode: LaunchMode.externalApplication,
+                  )) {
+                    throw 'Could not launch $uri';
+                  }
+                },
+                icon: Icon(
+                  Icons.facebook_rounded,
+                  size: 32.w,
+                ),
+              )
+            ],
+          ),
+        );
+      },
+    );
   }
 
   @override
@@ -42,32 +99,33 @@ class _SettingsPageState extends State<SettingsPage> {
     final colors = Theme.of(context).colorScheme;
 
     return Scaffold(
-      appBar: _buildAppBar(colors),
+      appBar: AppBar(
+        centerTitle: true,
+        backgroundColor: colors.secondary,
+        foregroundColor: Colors.white,
+        title: Text(
+          'الإعدادات',
+          style: TextStyle(
+            color: Colors.white,
+            fontFamily: "Lateef",
+            fontSize: 24.sp,
+          ),
+        ),
+      ),
       body: Padding(
         padding: EdgeInsets.all(16.w),
         child: ListView(
-          children: const [
-            _ThemeSection(),
-            Divider(height: 32),
-            _AudioSection(),
-            Divider(height: 32),
-            _DisplaySection(),
+          children: [
+            const _ThemeSection(),
+            const Divider(height: 32),
+            const _AudioSection(),
+            const Divider(height: 32),
+            const _DisplaySection(),
+            FilledButton(
+              onPressed: () => _showDeveloperDialog(),
+              child: const Text("About The Developer"),
+            ),
           ],
-        ),
-      ),
-    );
-  }
-
-  AppBar _buildAppBar(ColorScheme colors) {
-    return AppBar(
-      centerTitle: true,
-      backgroundColor: colors.secondary,
-      title: Text(
-        'الإعدادات',
-        style: TextStyle(
-          color: Colors.white,
-          fontFamily: "Lateef",
-          fontSize: 24.sp,
         ),
       ),
     );
@@ -75,7 +133,6 @@ class _SettingsPageState extends State<SettingsPage> {
 }
 
 /*──────────────────────── THEME ────────────────────────*/
-
 class _ThemeSection extends StatelessWidget {
   const _ThemeSection();
 
@@ -88,11 +145,16 @@ class _ThemeSection extends StatelessWidget {
           children: [
             const _SectionHeader(title: 'المظهر'),
             ListTile(
-              title: const Text('اختيار المظهر'),
-              trailing: MyDropdownButton<AppTheme>(
-                selectedValue: themeProvider.currentTheme,
-                dropdownItems: AppTheme.values.map(_themeItem).toList(),
-                onChanged: (theme) => themeProvider.setTheme(theme!),
+              title: Text(
+                "الوضع الداكن",
+                style: TextStyle(
+                  fontFamily: "Lateef",
+                  color: Theme.of(context).colorScheme.onSurface,
+                ),
+              ),
+              trailing: CupertinoSwitch(
+                value: themeProvider.isDarkMode,
+                onChanged: (_) => themeProvider.toggleTheme(),
               ),
             ),
           ],
@@ -100,23 +162,9 @@ class _ThemeSection extends StatelessWidget {
       },
     );
   }
-
-  DropdownMenuItem<AppTheme> _themeItem(AppTheme theme) {
-    const labels = {
-      AppTheme.light: 'المظهر الفاتح',
-      AppTheme.dark: 'الوضع الداكن',
-      AppTheme.sepia: 'المظهر البني الداكن',
-    };
-
-    return DropdownMenuItem(
-      value: theme,
-      child: Text(labels[theme]!),
-    );
-  }
 }
 
 /*──────────────────────── AUDIO ────────────────────────*/
-
 class _AudioSection extends StatelessWidget {
   const _AudioSection();
 
@@ -130,10 +178,37 @@ class _AudioSection extends StatelessWidget {
         const _SectionHeader(title: 'الصوت'),
         _ReciterSelector(audioService: audioService),
         ListTile(
-          title: const Text('تكرار الآيات'),
-          trailing: CupertinoSwitch(
-            value: audioService.autoPlayNext,
-            onChanged: (_) => audioService.toggleAutoPlay(),
+          title: Text(
+            'التشغيل التلقائي للايات',
+            style: TextStyle(
+              fontFamily: "Lateef",
+              fontSize: 18.sp,
+              color: Theme.of(context).colorScheme.onSurface,
+            ),
+          ),
+          trailing: ValueListenableBuilder<bool>(
+            valueListenable: audioService.autoPlayNext,
+            builder: (_, value, __) => CupertinoSwitch(
+              value: value,
+              onChanged: (_) => audioService.toggleAutoPlay(),
+            ),
+          ),
+        ),
+        ListTile(
+          title: Text(
+            "التنقل التلقائي بين اﻷيات",
+            style: TextStyle(
+              fontFamily: "Lateef",
+              fontSize: 18.sp,
+              color: Theme.of(context).colorScheme.onSurface,
+            ),
+          ),
+          trailing: ValueListenableBuilder<bool>(
+            valueListenable: audioService.animateToCurrentVerse,
+            builder: (_, value, __) => CupertinoSwitch(
+              value: value,
+              onChanged: (_) => audioService.toggleAnimtingVerse(),
+            ),
           ),
         ),
       ],
@@ -141,15 +216,30 @@ class _AudioSection extends StatelessWidget {
   }
 }
 
-class _ReciterSelector extends StatelessWidget {
+class _ReciterSelector extends StatefulWidget {
   const _ReciterSelector({required this.audioService});
 
   final AudioService audioService;
 
   @override
+  State<_ReciterSelector> createState() => _ReciterSelectorState();
+}
+
+class _ReciterSelectorState extends State<_ReciterSelector> {
+  late Future<List<Reciter>> _recitersFuture;
+
+  @override
+  void initState() {
+    super.initState();
+    _recitersFuture = RecitersDatabase.getAllReciters();
+  }
+
+  @override
   Widget build(BuildContext context) {
+    final audioService = widget.audioService;
+
     return FutureBuilder<List<Reciter>>(
-      future: RecitersDatabase.getAllReciters(),
+      future: _recitersFuture,
       builder: (_, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
           return const ListTile(
@@ -158,11 +248,13 @@ class _ReciterSelector extends StatelessWidget {
           );
         }
 
-        if (!snapshot.hasData || snapshot.data!.isEmpty) {
+        if (snapshot.hasError ||
+            snapshot.data == null ||
+            snapshot.data!.isEmpty) {
           return const ListTile(
             title: Text('القارئ'),
             subtitle: Text(
-              'فشل تحميل القرّاء',
+              'لا يوجد قراء متاحين',
               style: TextStyle(color: Colors.red),
             ),
           );
@@ -173,29 +265,39 @@ class _ReciterSelector extends StatelessWidget {
             reciters.first.identifier;
 
         return ListTile(
-          title: const Text(
+          title: Text(
             'القارئ',
-            maxLines: 1,
+            style: TextStyle(
+              fontFamily: "Lateef",
+              fontSize: 18.sp,
+              color: Theme.of(context).colorScheme.onSurface,
+            ),
           ),
-          trailing: MyDropdownButton<String>(
-            selectedValue: selectedId,
-            dropdownItems: reciters
-                .map(
-                  (r) => DropdownMenuItem(
-                    value: r.identifier,
-                    child: Text(
-                      r.name,
-                      style: const TextStyle(
-                        fontSize: 12,
-                      ),
-                      overflow: TextOverflow.fade,
-                    ),
-                  ),
-                )
-                .toList(),
-            onChanged: (id) {
-              final reciter = reciters.firstWhere((r) => r.identifier == id);
-              audioService.setReciter(reciter);
+          trailing: ValueListenableBuilder<Reciter?>(
+            valueListenable: audioService.currentReciter,
+            builder: (_, value, __) {
+              return MyDropdownButton<String>(
+                selectedValue: value?.identifier ?? selectedId,
+                dropdownItems: reciters
+                    .map((r) => DropdownMenuItem(
+                          value: r.identifier,
+                          child: Text(
+                            r.name,
+                            style: TextStyle(
+                              fontFamily: "Lateef",
+                              fontSize: 18.sp,
+                              color: Colors.black,
+                            ),
+                            overflow: TextOverflow.fade,
+                          ),
+                        ))
+                    .toList(),
+                onChanged: (id) {
+                  final reciter =
+                      reciters.firstWhere((r) => r.identifier == id);
+                  audioService.setReciter(reciter);
+                },
+              );
             },
           ),
         );
@@ -205,7 +307,6 @@ class _ReciterSelector extends StatelessWidget {
 }
 
 /*──────────────────────── DISPLAY ────────────────────────*/
-
 class _DisplaySection extends StatelessWidget {
   const _DisplaySection();
 
@@ -217,53 +318,66 @@ class _DisplaySection extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             const _SectionHeader(title: 'العرض'),
-
-            /// Font selector
             ListTile(
-              title: const Text('الخط العربي'),
+              title: Text(
+                'الخط العربي',
+                style: TextStyle(
+                  fontFamily: "Lateef",
+                  fontSize: 18.sp,
+                  color: Theme.of(context).colorScheme.onSurface,
+                ),
+              ),
               trailing: MyDropdownButton<String>(
                 selectedValue: settings.currentFont,
                 dropdownItems: settings.fontsList
-                    .map(
-                      (font) => DropdownMenuItem(
-                        value: font,
-                        child: Text(font, style: TextStyle(fontFamily: font)),
-                      ),
-                    )
+                    .map((font) => DropdownMenuItem(
+                          value: font,
+                          child: Text(
+                            font,
+                            style: TextStyle(
+                              fontFamily: "Lateef",
+                              fontSize: 18.sp,
+                              color: Colors.black,
+                            ),
+                            overflow: TextOverflow.fade,
+                          ),
+                        ))
                     .toList(),
                 onChanged: (fontName) => settings.changeCurrentFont(fontName!),
               ),
             ),
-
-            ListTile(
-              title: const Text("الخط الغربي"),
-              trailing: MyDropdownButton<String>(
-                selectedValue: settings.currentEngFont,
-                dropdownItems: settings.fontsEngList
-                    .map(
-                      (font) => DropdownMenuItem(
-                        value: font,
-                        child: Text(font, style: TextStyle(fontFamily: font)),
-                      ),
-                    )
-                    .toList(),
-                onChanged: (fontName) =>
-                    settings.changeCurrentEngFont(fontName!),
+            Padding(
+              padding: EdgeInsets.symmetric(horizontal: 8.h),
+              child: Row(
+                children: [
+                  Text(
+                    'حجم الخط العربي',
+                    style: TextStyle(
+                      fontFamily: "Lateef",
+                      fontSize: 18.sp,
+                      color: Theme.of(context).colorScheme.onSurface,
+                    ),
+                  ),
+                  Expanded(
+                    child: Slider(
+                      min: 16,
+                      max: 32,
+                      label: settings.arabicFontSize.toStringAsFixed(0),
+                      value: settings.arabicFontSize,
+                      onChanged: settings.changeArabicFontSize,
+                    ),
+                  ),
+                  Text(
+                    settings.arabicFontSize.toStringAsFixed(0),
+                    style: TextStyle(
+                      fontFamily: "Lateef",
+                      fontSize: 18.sp,
+                      color: Theme.of(context).colorScheme.onSurface,
+                    ),
+                  ),
+                ],
               ),
             ),
-
-            /// Font size slider
-            // Text(
-            //   'حجم الخط العربي: ${settings.arabicFontSize.toStringAsFixed(1)}',
-            // ),
-            // Slider(
-            //   value: settings.arabicFontSize,
-            //   // value: 20,r
-            //   min: 16,
-            //   max: 48,
-            //   label: settings.arabicFontSize.toInt().toString(),
-            //   onChanged: settings.changeArabicFontSize,
-            // ),
           ],
         );
       },
@@ -272,7 +386,6 @@ class _DisplaySection extends StatelessWidget {
 }
 
 /*──────────────────────── COMMON ────────────────────────*/
-
 class _SectionHeader extends StatelessWidget {
   const _SectionHeader({required this.title});
 
@@ -284,10 +397,11 @@ class _SectionHeader extends StatelessWidget {
       padding: EdgeInsets.only(bottom: 12.h),
       child: Text(
         title,
-        style: Theme.of(context)
-            .textTheme
-            .titleMedium
-            ?.copyWith(fontWeight: FontWeight.bold),
+        style: TextStyle(
+          fontFamily: "Lateef",
+          fontSize: 24.sp,
+          color: Theme.of(context).colorScheme.onSurface,
+        ),
       ),
     );
   }

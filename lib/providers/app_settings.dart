@@ -23,7 +23,7 @@ class AppSettings with ChangeNotifier {
   // --- Public getters (scaled via ScreenUtil) ---
   String get currentFont => _currentFont;
   String get currentEngFont => _currentEngFont;
-  double get arabicFontSize => _arabicFontSize.sp;
+  double get arabicFontSize => _arabicFontSize;
 
   // --- Font list (immutable) ---
   List<String> get fontsList => List.unmodifiable(_kAvailableArabicFonts);
@@ -45,7 +45,7 @@ class AppSettings with ChangeNotifier {
       _currentFont = _kDefaultFont;
     }
     // Clamp font size to reasonable range
-    _arabicFontSize = _arabicFontSize;
+    _arabicFontSize = _arabicFontSize.clamp(12, 48);
   }
 
   // --- Font setter with validation & persistence ---
@@ -76,7 +76,7 @@ class AppSettings with ChangeNotifier {
   // --- Font size setter with clamping & persistence ---
   Future<void> changeArabicFontSize(double newValue) async {
     // Clamp to safe range and round to avoid floating-point noise
-    final clamped = newValue.roundToDouble();
+    final clamped = newValue.clamp(12, 48).roundToDouble();
     if (clamped == _arabicFontSize) return;
 
     _arabicFontSize = clamped;

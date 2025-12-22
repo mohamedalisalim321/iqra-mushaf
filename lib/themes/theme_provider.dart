@@ -4,7 +4,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'theme.dart';
 
 /// Enum for future-proofing (you can add more themes later)
-enum AppTheme { light, dark, sepia }
+enum AppTheme { light, dark }
 
 class ThemeProvider extends ChangeNotifier {
   static const _prefKey = 'app_theme';
@@ -23,8 +23,7 @@ class ThemeProvider extends ChangeNotifier {
         return darkMode;
       case AppTheme.light:
         return lightMode;
-      case AppTheme.sepia:
-        return sepiaMode;
+
       default:
         return lightMode;
     }

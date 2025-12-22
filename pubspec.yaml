@@ -19,7 +19,7 @@ publish_to: 'none' # Remove this line if you wish to publish to pub.dev
 version: 1.0.0+1
 
 environment:
-  sdk: ^3.5.2
+  sdk: ">=2.19.0 <4.0.0"
 
 # Dependencies specify other packages that your package needs in order to work.
 # To automatically upgrade your package dependencies to the latest versions
@@ -43,12 +43,11 @@ dependencies:
   path_provider: ^2.1.5
   provider: ^6.1.5+1
   flutter_islamic_icons: ^1.0.2
-  flutter_local_notifications: ^19.5.0
-  permission_handler: ^12.0.1
-  timezone: ^0.10.1
-  flutter_timezone: ^4.1.1
   shared_preferences: ^2.5.3
   just_audio: ^0.9.46
+  http: ^1.6.0
+  url_launcher: ^6.3.1
+
 
 dev_dependencies:
   flutter_test:
@@ -62,9 +61,17 @@ dev_dependencies:
   flutter_lints: ^4.0.0
   isar_generator: ^3.1.0+1
   build_runner: ^2.4.13
+  flutter_launcher_icons: ^0.14.4
 
 # For information on the generic Dart part of this file, see the
 # following page: https://dart.dev/tools/pub/pubspec
+
+flutter_icons:
+  android: true
+  ios: false
+  image_path: "assets/images/iqra-icon.png"
+  adaptive_icon_background: "#1B5E4B" # optional (Android 8+)
+  adaptive_icon_foreground: "assets/images/iqra-icon.png"
 
 # The following section is specific to Flutter packages.
 flutter:
@@ -92,7 +99,7 @@ flutter:
   # list giving the asset and other descriptors for the font. For
   # example:
   fonts:
-### App Fonts
+    ### App Fonts
     - family: "Cairo"
       fonts:
         - asset: assets/fonts/App Fonts/Cairo-Regular.ttf
@@ -108,7 +115,7 @@ flutter:
     - family: "Lora"
       fonts:
         - asset: assets/fonts/App Fonts/Lora-Regular.ttf
-### Quran Fonts
+    ### Quran Fonts
     - family: "arsura"
       fonts:
         - asset: assets/fonts/Quran Fonts/arsura.ttf
@@ -124,7 +131,7 @@ flutter:
     - family: "SurahName"
       fonts:
         - asset: assets/fonts/Quran Fonts/surah-name-v1.ttf
-
+    ### qcf fonts
     - family: QCF_BSML 
       fonts:
         - asset: assets/fonts\QCF2BSMLfonts\QCF4_QBSML-Regular.woff
